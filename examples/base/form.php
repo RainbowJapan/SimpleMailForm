@@ -96,10 +96,10 @@ $mailFormat = <<<EOD
 {{{mail}}}
 
 ＜電話番号＞
-{{{url}}}
+{{{tel}}}
 
 ＜URL＞
-{{{opinion}}}
+{{{url}}}
 
 ＜お問い合わせ内容＞
 {{{opinion}}}
@@ -140,10 +140,10 @@ $mailFormat = <<<EOD
 {{{mail}}}
 
 ＜電話番号＞
-{{{url}}}
+{{{tel}}}
 
 ＜URL＞
-{{{opinion}}}
+{{{url}}}
 
 ＜お問い合わせ内容＞
 {{{opinion}}}
