@@ -81,7 +81,7 @@ class EncodePHPMailer extends PHPMailer {
 	 * @param string $subject サブジェクト
 	 */
 	public function setSubject($subject){
-		$this->Subject = $this->encodeForMime($this->convertEncoding($name));
+		$this->Subject = $this->encodeForMime($this->convertEncoding($subject));
 	}
 
 	/**
@@ -91,7 +91,7 @@ class EncodePHPMailer extends PHPMailer {
 	 * @param string $isHtml HTML有無(任意)
 	 */
 	public function setBody($body, $isHtml=false){
-		$this->Body = $this->convertEncoding($name);
+		$this->Body = $this->convertEncoding($body);
 		$this->IsHtml(false);
 	}
 
@@ -101,7 +101,7 @@ class EncodePHPMailer extends PHPMailer {
 	 * @param string $altbody 本文
 	 */
 	public function setAltBody($altbody){
-		$this->AltBody = $this->convertEncoding($name);
+		$this->AltBody = $this->convertEncoding($altbody);
 	}
 	
 	/**
