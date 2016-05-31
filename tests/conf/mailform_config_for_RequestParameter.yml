@@ -1,0 +1,14 @@
+items:
+  username:
+    title: '名前'
+    value: string
+    empty: false
+  kana:
+    title: 'フリガナ'
+    value: kana
+    empty: false
+mailconf:
+  to-admin:
+    from: from@example.com
+    to: to@example.com
+    subject: subject

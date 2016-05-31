@@ -1,0 +1,73 @@
+items:
+  kind:
+    title: 'お問い合わせの種類'
+    value: select
+    empty: false
+    selectvalues:
+      1: お問い合わせ１
+      2: お問い合わせ２
+      3: お問い合わせ３
+  username:
+    title: '名前'
+    value: string
+    empty: false
+  kana:
+    title: 'フリガナ'
+    value: kana
+    empty: false
+  mail:
+    title: 'メールアドレス'
+    value: email
+    empty: false
+  mailconf:
+    title: 'メールアドレス（確認）'
+    value: email
+    empty: false
+    same: mail
+  tel:
+    title: '電話番号'
+    value: plus
+    empty: true
+  url:
+    title: 'サイト'
+    value: string
+    empty: true
+  opinion:
+    title: 'お問い合わせ内容'
+    value: string
+    empty: false
+  interesting_items:
+    title: '興味のある商品'
+    value: multi-select
+    empty: true
+    selectvalues:
+      item1: 商品１
+      item2: 商品２ 
+      item3: 商品３
+  time:
+    title: 'ご希望の時間帯'
+    value: select
+    empty: true
+    selectvalues:
+      1: 希望なし
+      2: 9:00～12:00
+      3: 12:00～17:00
+      4: 17:00～20:00
+  conf:
+    title: '個人情報についての許可'
+    value: agreement
+    empty: false
+    equal: 確認済
+mailconf:
+  to-admin:
+    from: from@example.com
+    to: 
+      - to1<to1@example.com>
+      - to2 <to2@example.com>
+    subject: "【お問い合わせ】{{{kind}}}"
+    body-template-path: "to-admin-mail-body-template.txt"
+  to-user:
+    from:  from@example.com
+    to: "{{{mail}}}"
+    subject: "お問い合わせありがとうございます（自動送信メール）"
+    body-template-path: "to-user-mail-body-template.txt"

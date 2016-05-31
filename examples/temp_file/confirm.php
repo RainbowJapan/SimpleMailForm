@@ -16,30 +16,12 @@
 				<strong>※印は、必須</strong>
 				<table>
 					<tr>
-						<th><p>お問い合わせの種類<strong>※</strong></p></th>
-						<td>
-							<?php __p($mailform->getSelectedValue('kind')) ?>
-						</td>
-					</tr>
-					<tr>
 						<th><p>名前<strong>※</strong></p></th>
 						<td><div><?php __e($mailform->getValue('username')) ?></div></td>
 					</tr>
 					<tr>
-						<th><p>フリガナ（カタカナ）<strong>※</strong></p></th>
-						<td><div><?php __e($mailform->getValue('kana')) ?></div></td>
-					</tr>
-					<tr>
 						<th><p>メールアドレス（半角英数字）<strong>※</strong></p></th>
 						<td><div><p><?php __e($mailform->getValue('mail')) ?></p></div></td>
-					</tr>
-					<tr>
-						<th><p>電話番号（半角数字）</p></th>
-						<td><div><?php __e($mailform->getValue('tel')) ?></div></td>
-					</tr>
-					<tr>
-						<th><p>URL</p></th>
-						<td><div><?php __e($mailform->getValue('url')) ?></div></td>
 					</tr>
 					<tr>
 						<th><p>お問い合わせ<strong>※</strong></p></th>
@@ -48,15 +30,9 @@
 						</td>
 					</tr>
 					<tr>
-						<th><p>希望されるサンプル<strong>※</strong></p></th>
+						<th><p>資料<strong>※</strong></p></th>
 						<td>
-							<?php __e($mailform->getMultiSelectedValue('interesting_items')) ?>
-						</td>
-					</tr>
-					<tr>
-						<th><p>ご希望の時間帯<strong>※</strong></p></th>
-						<td>
-							<?php __e($mailform->getSelectedValue('time')) ?>
+							<?php __e($mailform->getValue('docment-file')) ?>
 						</td>
 					</tr>
 				</table>

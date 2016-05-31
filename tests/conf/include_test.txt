@@ -1,0 +1,1 @@
+include_test:<?php echo($mailform->getTemplateURL()); ?>

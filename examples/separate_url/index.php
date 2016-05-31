@@ -1,4 +1,6 @@
-<?php global $mailform; ?>
+<?php
+require_once(dirname(__FILE__)."/form.php");
+?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja">
@@ -11,7 +13,7 @@
 <div id="content">
 	<h1>お問い合わせサンプル</h1>
 	<div id="formarea">
-		<form method="post" action="form.php" name="contactform">
+		<form method="post" action="confirm.php" name="contactform">
 <?php
 	if($mailform->isError()) { ?>
 			<div class="errorbox">

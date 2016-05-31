@@ -1,0 +1,50 @@
+items:
+  username:
+    title: '名前'
+    value: string
+    empty: false
+  mail:
+    title: 'メールアドレス'
+    value: email
+    empty: false
+  mailconf:
+    title: 'メールアドレス（確認）'
+    value: email
+    empty: false
+    same: mail
+  opinion:
+    title: 'お問い合わせ内容'
+    value: string
+    empty: false
+  docment-file:
+    title: '資料'
+    value: file
+    empty: false
+    filetypes: 
+      - "application/msword"
+      - "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      - "application/vnd.ms-excel"
+      - "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      - "application/vnd.ms-powerpoint"
+      - "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+      - "application/pdf"
+      - "application/zip"
+  conf:
+    title: '個人情報についての許可'
+    value: agreement
+    empty: false
+    equal: 確認済
+mailconf:
+  to-admin:
+    from: from@example.com
+    to: to<to1@example.com>
+    subject: "【お問い合わせ】資料が届きました"
+    body-template-path: "to-admin-mail-body-template.txt"
+    arrow-temp-files: true
+  to-user:
+    from:  from@example.com
+    to: "{{{mail}}}"
+    subject: "お問い合わせありがとうございます（自動送信メール）"
+    body-template-path: "to-user-mail-body-template.txt"
+    from: from@example.com
+    arrow-temp-files: false
