@@ -450,6 +450,57 @@ class MailForm
 	}
 
 	/**
+	 * ReplyToメールアドレスと名前を設定する。
+	 *
+	 * @param string $address アドレス
+	 * @param string $name 名前
+	 */
+	public function setReplyTo($address, $name = '')
+	{
+		$config = $this->getMailConfigByIndex(self::DEF_MAIL_CONFIG_KEY);
+		$config->ReplyTo = [$address => $name];
+	}
+
+	/**
+	 * ReplyToメールアドレスと名前を設定する。
+	 * indexは、メールの設定を認識するための名前。
+	 * 複数のフォーマットでメールを送信する時に使用してください。
+	 *
+	 *
+	 * @param mixed $index メール設定のindex
+	 * @param string $address アドレス
+	 * @param string $name 名前
+	 */
+	public function setReplyToByIndex($index, $address, $name = '')
+	{
+		$config = $this->getMailConfigByIndex($index);
+		$config->ReplyTo = [$address => $name];
+	}
+
+	/**
+	 * ReplyToのバッファ(array)を返す。
+	 *
+	 * @return array 差出人のバッファ
+	 */
+	protected function getReplyToArray()
+	{
+		return $this->getMailConfigByIndex(self::DEF_MAIL_CONFIG_KEY)->ReplyTo;
+	}
+
+	/**
+	 * ReplyToのバッファ(array)を返す。
+	 * indexは、メールの設定を認識するための名前。
+	 * 複数のフォーマットでメールを送信する時に使用してください。
+	 *
+	 * @param mixed $index メール設定のindex
+	 * @return array 差出人のバッファ
+	 */
+	protected function getReplyToArrayByIndex($index)
+	{
+		return $this->getMailConfigByIndex($index)->ReplyTo;
+	}
+
+	/**
 	 * ReturnPathメールアドレスと名前を設定する。
 	 *
 	 * @param string $address アドレス
@@ -713,6 +764,14 @@ class MailForm
 				}
 				if (isset($values['subject'])) {
 					$this->setMailSubjectTemplateByIndex($key, $values['subject']);
+				}
+				if (isset($values['reply-to'])) {
+					$t = $this->parseMailAddressList($values['reply-to']);
+					$this->setReplyToByIndex($key, $t[0], $t[1]);
+				}
+				if (isset($values['return-path'])) {
+					$t = $this->parseMailAddressList($values['return-path']);
+					$this->setReturnPathByIndex($key, $t[0]);
 				}
 				if (isset($values['body-template-path'])) {
 					$path = ($templateDirectoryPath === null)
@@ -1598,6 +1657,13 @@ class MailForm
 		if (count($returnpaths) > 0) {
 			foreach ($returnpaths as $address => $name) {
 				$mail->setReturnPath($address, $name);
+			}
+		}
+		
+		$replyto = $this->getReplyToArrayByIndex($index);
+		if (count($replyto) > 0) {
+			foreach ($replyto as $address => $name) {
+				$mail->setReplyTo($address, $name);
 			}
 		}
 

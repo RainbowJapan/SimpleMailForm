@@ -308,7 +308,7 @@ class MailFormTest extends SimpleMailForm_TestCase
 		$this->assertArrayHasKey('path2@example.com', $paths);
 		$this->assertEquals('path2', $paths['path2@example.com']);
 	}
-	
+
 	public function testAddReturnPathByIndexAndGetReturnPathArrayByIndex()
 	{
 		$getReturnPathArrayByIndex = getMethod('MailForm', 'getReturnPathArrayByIndex');
@@ -332,7 +332,48 @@ class MailFormTest extends SimpleMailForm_TestCase
 		$this->assertArrayHasKey('path3@example.com', $paths);
 		$this->assertEquals('path3', $paths['path3@example.com']);
 	}
-	
+
+	public function testSetReplyToAndGetReplyToArray()
+	{
+		$getReplyToArray = getMethod('MailForm', 'getReplyToArray');
+		$mailform = new MailForm();
+		$mailform->setReplyTo('reply1@example.com', 'reply1');
+		$replys = $getReplyToArray->invokeArgs($mailform, []);
+		$this->assertCount(1, $replys);
+		$this->assertArrayHasKey('reply1@example.com', $replys);
+		$this->assertEquals('reply1', $replys['reply1@example.com']);
+
+		$mailform->setReplyTo('reply2@example.com', 'reply2');
+		$replys = $getReplyToArray->invokeArgs($mailform, []);
+		$this->assertCount(1, $replys);
+		$this->assertArrayHasKey('reply2@example.com', $replys);
+		$this->assertEquals('reply2', $replys['reply2@example.com']);
+	}
+
+	public function testSetReplyToByIndexAndGetReplyToArrayByIndex()
+	{
+		$getReplyToArrayByIndex = getMethod('MailForm', 'getReplyToArrayByIndex');
+		$mailform = new MailForm();
+
+		$mailform->setReplyToByIndex(1, 'reply1@example.com', 'reply1');
+		$replys = $getReplyToArrayByIndex->invokeArgs($mailform, [1]);
+		$this->assertCount(1, $replys);
+		$this->assertArrayHasKey('reply1@example.com', $replys);
+		$this->assertEquals('reply1', $replys['reply1@example.com']);
+
+		$mailform->setReplyToByIndex(1, 'reply2@example.com', 'reply2');
+		$replys = $getReplyToArrayByIndex->invokeArgs($mailform, [1]);
+		$this->assertCount(1, $replys);
+		$this->assertArrayHasKey('reply2@example.com', $replys);
+		$this->assertEquals('reply2', $replys['reply2@example.com']);
+
+		$mailform->setReplyToByIndex(2, 'reply3@example.com', 'reply3');
+		$replys = $getReplyToArrayByIndex->invokeArgs($mailform, [2]);
+		$this->assertCount(1, $replys);
+		$this->assertArrayHasKey('reply3@example.com', $replys);
+		$this->assertEquals('reply3', $replys['reply3@example.com']);
+	}
+
 	public function testSetMailBodyTemplateAndGetMailBodyTemplate()
 	{
 		$getMailBodyTemplate = getMethod('MailForm', 'getMailBodyTemplate');
@@ -448,6 +489,8 @@ EOT;
 		$getFromArrayByIndex = getMethod('MailForm', 'getFromArrayByIndex');
 		$getMailSubjectTemplateByIndex = getMethod('MailForm', 'getMailSubjectTemplateByIndex');
 		$getMailBodyTemplateByIndex = getMethod('MailForm', 'getMailBodyTemplateByIndex');
+		$getReplyToArrayByIndex = getMethod('MailForm', 'getReplyToArrayByIndex');
+		$getReturnPathArrayByIndex = getMethod('MailForm', 'getReturnPathArrayByIndex');
 		$ErrorCode = getProperty('MailForm', 'ErrorCode');
 		$mailform = new MailForm();
 		$this->assertFalse($mailform->setFormConfig("", "", 100000));
@@ -480,6 +523,8 @@ EOT;
 		  "to-admin-test2@example.com"
 		],
 		"subject": "to-admin-subject",
+		"reply-to": "to-admin-reply <to-admin-reply@example.com>",
+		"return-path": "to-admin-return@example.com",
 		"allow-temp-files": true
 	  },
 	  "to-user": {
@@ -500,7 +545,17 @@ EOT;
 		
 		$subject = $getMailSubjectTemplateByIndex->invokeArgs($mailform, ['to-admin']);
 		$this->assertEquals('to-admin-subject', $subject);
-		
+
+		$replytos = $getReplyToArrayByIndex->invokeArgs($mailform, ['to-admin']);
+		$this->assertCount(1, $replytos);
+		$this->assertArrayHasKey('to-admin-reply@example.com', $replytos);
+		$this->assertEquals('to-admin-reply', $replytos['to-admin-reply@example.com']);
+
+		$returnpaths = $getReturnPathArrayByIndex->invokeArgs($mailform, ['to-admin']);
+		$this->assertCount(1, $returnpaths);
+		$this->assertArrayHasKey('to-admin-return@example.com', $returnpaths);
+		$this->assertEquals('', $returnpaths['to-admin-return@example.com']);
+
 		$tos = $getToArrayByIndex->invokeArgs($mailform, ['to-admin']);
 		$this->assertCount(2, $tos);
 		$this->assertArrayHasKey('to-admin-test1@example.com', $tos);
@@ -1830,6 +1885,7 @@ EOT;
 		$From = getProperty('SimpleMailer', 'From');
 		$To = getProperty('SimpleMailer', 'To');
 		$ReturnPath = getProperty('SimpleMailer', 'ReturnPath');
+		$ReplyTo = getProperty('SimpleMailer', 'ReplyTo');
 		$Subject = getProperty('SimpleMailer', 'Subject');
 		$Body = getProperty('SimpleMailer', 'Body');
 		
@@ -1892,6 +1948,7 @@ EOT;
 		
 		$mailform->setFromByIndex('1', '{{{from}}}', 'from_name');
 		$mailform->setReturnPathByIndex('1', 'returnpath@example.com', 'returnpath_name');
+		$mailform->setReplyToByIndex('1', 'replyto@example.com', 'replyto_name');
 		$mailform->addToByIndex('1', '{{{to}}}');
 		$mailform->addToByIndex('1', 'addTo@example.com', 'add_to_name');
 		$mailform->setMailSubjectTemplateByIndex('1', 'subject {{{key1}}}');
@@ -1917,6 +1974,8 @@ EOT;
 		$this->assertEquals('from_name', $From->getValue($simpleMailer)[1]);
 		$this->assertEquals('returnpath@example.com', $ReturnPath->getValue($simpleMailer)[0]);
 		$this->assertEquals('returnpath_name', $ReturnPath->getValue($simpleMailer)[1]);
+		$this->assertEquals('replyto@example.com', $ReplyTo->getValue($simpleMailer)[0]);
+		$this->assertEquals('replyto_name', $ReplyTo->getValue($simpleMailer)[1]);
 		
 		$this->assertEquals('subject value1', $Subject->getValue($simpleMailer));
 		$this->assertEquals('body key2:value2 file:filevalue selectkey:option1 multi-selectkey:option2／option3', $Body->getValue($simpleMailer));
