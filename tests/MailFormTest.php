@@ -1401,6 +1401,8 @@ EOT;
 		$this->assertTrue($isTel->invokeArgs($mailform, ['------']));
 		$this->assertFalse($isTel->invokeArgs($mailform, ['abcde']));
 		$this->assertFalse($isTel->invokeArgs($mailform, ['てすと']));
+		$this->assertFalse($isTel->invokeArgs($mailform, ['03-1234-1234abc']));
+		$this->assertFalse($isTel->invokeArgs($mailform, ['03-1234-1234\n']));
 	}
 	
 	public function testConvToTwoByte()

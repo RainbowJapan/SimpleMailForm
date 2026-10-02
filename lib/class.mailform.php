@@ -1370,7 +1370,7 @@ class MailForm
 	 */
 	protected function isTel($value)
 	{
-		return preg_match('/^[0-9+-]+/u', $value) === 1;
+		return preg_match('/^[0-9+-]+$/u', $value) === 1;
 	}
 
 	/**
