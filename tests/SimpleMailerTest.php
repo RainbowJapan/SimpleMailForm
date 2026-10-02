@@ -2,11 +2,12 @@
 require_once(dirname(__FILE__).'/helpers/common.php');
 require_once(dirname(__FILE__).'/../lib/class.simplemailer.php');
 
-class InnerSessionTest extends PHPUnit_Framework_TestCase
+class SimpleMailerTest extends SimpleMailForm_TestCase
 {
-	protected function setUp(){
-		if(!isset($_SESSION)){
-			$_SESSION=array();
+	protected function setUpCompat()
+	{
+		if (!isset($_SESSION)) {
+			$_SESSION=[];
 		}
 	}
 	
@@ -56,8 +57,8 @@ class InnerSessionTest extends PHPUnit_Framework_TestCase
 		$mailer = new SimpleMailer();
 		$mailer->setFromEncoding("EUC-JP");
 		$mailer->setCharSet("UTF-8");
-		$value = $encode->invokeArgs($mailer, array(hex2bin('a5c6a5b9a5c8a5c7a1bca5bfa1bc')));
-//		$this->assertEquals(bin2hex($value), 'e38386e382b9e38388e38387e383bce382bfe383bc');
+		$value = $encode->invokeArgs($mailer, [hex2bin('a5c6a5b9a5c8a5c7a1bca5bfa1bc')]);
+		//		$this->assertEquals(bin2hex($value), 'e38386e382b9e38388e38387e383bce382bfe383bc');
 		$this->assertEquals('テストデーター', $value);
 	}
 	
@@ -94,7 +95,7 @@ class InnerSessionTest extends PHPUnit_Framework_TestCase
 		
 		$mailer->addAddress('test2@example.com', hex2bin('a5c6a5b9a5c8a5c7a1bca5bfa1bc'));
 		$to = $To->getValue($mailer);
-		 $this->assertCount(2, $to);
+		$this->assertCount(2, $to);
 		$this->assertEquals('test2@example.com', $to[1][0]);
 		$this->assertEquals('テストデーター', $to[1][1]);
 	}
@@ -114,7 +115,7 @@ class InnerSessionTest extends PHPUnit_Framework_TestCase
 		
 		$mailer->addCc('test2@example.com', hex2bin('a5c6a5b9a5c8a5c7a1bca5bfa1bc'));
 		$cc = $Cc->getValue($mailer);
-		 $this->assertCount(2, $cc);
+		$this->assertCount(2, $cc);
 		$this->assertEquals('test2@example.com', $cc[1][0]);
 		$this->assertEquals('テストデーター', $cc[1][1]);
 	}
@@ -134,7 +135,7 @@ class InnerSessionTest extends PHPUnit_Framework_TestCase
 		
 		$mailer->addBcc('test2@example.com', hex2bin('a5c6a5b9a5c8a5c7a1bca5bfa1bc'));
 		$bcc = $Bcc->getValue($mailer);
-		 $this->assertCount(2, $bcc);
+		$this->assertCount(2, $bcc);
 		$this->assertEquals('test2@example.com', $bcc[1][0]);
 		$this->assertEquals('テストデーター', $bcc[1][1]);
 	}
@@ -201,29 +202,52 @@ class InnerSessionTest extends PHPUnit_Framework_TestCase
 	
 	public function testSetAltBody()
 	{
-		// 実装なし
+		$mailer = new SimpleMailer();
+		$exceptionCaught = false;
+		try {
+			$mailer->setAltBody('alt body text');
+		} catch (BadMethodCallException $e) {
+			$exceptionCaught = true;
+			$this->assertEquals('unimplemented', $e->getMessage());
+		}
+		$this->assertTrue($exceptionCaught);
 	}
 	
 	public function testAddAttachment()
 	{
-		// 実装なし
+		$mailer = new SimpleMailer();
+		$exceptionCaught = false;
+		try {
+			$mailer->addAttachment('/path/to/file');
+		} catch (BadMethodCallException $e) {
+			$exceptionCaught = true;
+			$this->assertEquals('unimplemented', $e->getMessage());
+		}
+		$this->assertTrue($exceptionCaught);
 	}
 	
 	public function testAddHeader()
 	{
-		// 実装なし
+		$mailer = new SimpleMailer();
+		$exceptionCaught = false;
+		try {
+			$mailer->addHeader('X-Custom-Header', 'HeaderValue');
+		} catch (BadMethodCallException $e) {
+			$exceptionCaught = true;
+			$this->assertEquals('unimplemented', $e->getMessage());
+		}
+		$this->assertTrue($exceptionCaught);
 	}
 	
 	public function testSend_falsePattern()
 	{
-		$mailer = $this->getMockBuilder('SimpleMailer')
-		->setMethods(array('sendMail'))
-		->getMock();
+		$mailer = $this->createCompatibleMock('SimpleMailer', ['sendMail']);
 		
-		$mailer->expects($this->any())
-		->method('sendMail')
-		->will($this->returnValue(false));
-
+		$expectation = $mailer->expects($this->once())
+			->method('sendMail');
+		
+		$this->setCompatibleReturnValue($expectation, false);
+		
 		$this->assertFalse($mailer->send());
 		
 		$mailer->addAddress('test1@example.com');
@@ -232,18 +256,17 @@ class InnerSessionTest extends PHPUnit_Framework_TestCase
 		$mailer->setFrom('test1@example.com');
 		$this->assertFalse($mailer->send());
 	}
-	
+
 	public function testSend_trueSimplePattern()
 	{
 		$header = "From: from@example.com\n";
-		$mailer = $this->getMockBuilder('SimpleMailer')
-		->setMethods(array('sendMail'))
-		->getMock();
+		$mailer = $this->createCompatibleMock('SimpleMailer', ['sendMail']);
 		
-		$mailer->expects($this->once())
-		->method('sendMail')
-		->with('to@example.com','subject','body', $header, NULL)
-		->will($this->returnValue(true));
+		$expectation = $mailer->expects($this->once())
+			->method('sendMail')
+			->with('to@example.com', 'subject', 'body', $header, null);
+		
+		$this->setCompatibleReturnValue($expectation, true);
 		
 		$mailer->addAddress('to@example.com');
 		$mailer->setFrom('from@example.com');
@@ -255,14 +278,13 @@ class InnerSessionTest extends PHPUnit_Framework_TestCase
 	public function testSend_trueReplyToPattern()
 	{
 		$header = "From: from@example.com\n";
-		$mailer = $this->getMockBuilder('SimpleMailer')
-		->setMethods(array('sendMail'))
-		->getMock();
+		$mailer = $this->createCompatibleMock('SimpleMailer', ['sendMail']);
 		
-		$mailer->expects($this->once())
+		$expectation = $mailer->expects($this->once())
 		->method('sendMail')
-		->with('to@example.com','subject','body', $header."Reply-To: reply@example.com\n", NULL)
-		->will($this->returnValue(true));
+		->with('to@example.com', 'subject', 'body', $header."Reply-To: reply@example.com\n", null);
+		
+		$this->setCompatibleReturnValue($expectation, true);
 		
 		$mailer->addAddress('to@example.com');
 		$mailer->setFrom('from@example.com');
@@ -275,14 +297,13 @@ class InnerSessionTest extends PHPUnit_Framework_TestCase
 	public function testSend_trueCcPattern()
 	{
 		$header = "From: from@example.com\n";
-		$mailer = $this->getMockBuilder('SimpleMailer')
-		->setMethods(array('sendMail'))
-		->getMock();
+		$mailer = $this->createCompatibleMock('SimpleMailer', ['sendMail']);
 		
-		$mailer->expects($this->once())
+		$expectation = $mailer->expects($this->once())
 		->method('sendMail')
-		->with('to@example.com','subject','body', $header."Cc: cc@example.com\n", NULL)
-		->will($this->returnValue(true));
+		->with('to@example.com', 'subject', 'body', $header."Cc: cc@example.com\n", null);
+		
+		$this->setCompatibleReturnValue($expectation, true);
 		
 		$mailer->addAddress('to@example.com');
 		$mailer->setFrom('from@example.com');
@@ -295,14 +316,13 @@ class InnerSessionTest extends PHPUnit_Framework_TestCase
 	public function testSend_trueBccPattern()
 	{
 		$header = "From: from@example.com\n";
-		$mailer = $this->getMockBuilder('SimpleMailer')
-		->setMethods(array('sendMail'))
-		->getMock();
+		$mailer = $this->createCompatibleMock('SimpleMailer', ['sendMail']);
 		
-		$mailer->expects($this->once())
+		$expectation = $mailer->expects($this->once())
 		->method('sendMail')
-		->with('to@example.com','subject','body', $header."Bcc: bcc@example.com\n", NULL)
-		->will($this->returnValue(true));
+		->with('to@example.com', 'subject', 'body', $header."Bcc: bcc@example.com\n", null);
+		
+		$this->setCompatibleReturnValue($expectation, true);
 		
 		$mailer->addAddress('to@example.com');
 		$mailer->setFrom('from@example.com');
@@ -314,15 +334,17 @@ class InnerSessionTest extends PHPUnit_Framework_TestCase
 	
 	public function testSend_trueAllPattern()
 	{
-		$header = "From: from@example.com\n";
-		$mailer = $this->getMockBuilder('SimpleMailer')
-		->setMethods(array('sendMail'))
-		->getMock();
+		$originalEncoding = mb_internal_encoding();
+		mb_internal_encoding('EUC-JP');
 		
-		$mailer->expects($this->once())
+		$header = "From: from@example.com\n";
+		$mailer = $this->createCompatibleMock('SimpleMailer', ['sendMail']);
+		
+		$expectation = $mailer->expects($this->once())
 		->method('sendMail')
-		->with('to@example.com','subject','body', $header."Reply-To: reply@example.com\nCc: cc@example.com\nBcc: bcc@example.com\n", NULL)
-		->will($this->returnValue(true));
+		->with('to@example.com', 'subject', 'body', $header."Reply-To: reply@example.com\nCc: cc@example.com\nBcc: bcc@example.com\n", null);
+		
+		$this->setCompatibleReturnValue($expectation, true);
 		
 		$mailer->addAddress('to@example.com');
 		$mailer->setFrom('from@example.com');
@@ -337,14 +359,13 @@ class InnerSessionTest extends PHPUnit_Framework_TestCase
 	public function testSend_trueCharset()
 	{
 		$header = "MIME-Version: 1.0\nContent-Transfer-Encoding: \nContent-Type : text/plain;\n\tcharset=\"UTF-8\";\nFrom: from@example.com\n";
-		$mailer = $this->getMockBuilder('SimpleMailer')
-		->setMethods(array('sendMail'))
-		->getMock();
+		$mailer = $this->createCompatibleMock('SimpleMailer', ['sendMail']);
 		
-		$mailer->expects($this->once())
+		$expectation = 	$mailer->expects($this->once())
 		->method('sendMail')
-		->with('to@example.com','subject','body', $header, NULL)
-		->will($this->returnValue(true));
+		->with('to@example.com', 'subject', 'body', $header, null);
+		
+		$this->setCompatibleReturnValue($expectation, true);
 		
 		$mailer->setCharSet("UTF-8");
 		$mailer->addAddress('to@example.com');
@@ -356,7 +377,10 @@ class InnerSessionTest extends PHPUnit_Framework_TestCase
 	
 	public function testSendMail()
 	{
-		 // チェックできず
+		$sendMail = getMethod('SimpleMailer', 'sendMail');
+		$mailer = new SimpleMailer();
+		$result = @$sendMail->invokeArgs($mailer, ['to@example.com', 'subject', 'body', "From: from@example.com\n", null]);
+		$this->assertTrue(is_bool($result));
 	}
 	public function testMakeAddressTextFromAddresses()
 	{
@@ -365,13 +389,13 @@ class InnerSessionTest extends PHPUnit_Framework_TestCase
 		$mailer = new SimpleMailer();
 		$mailer->setFromEncoding("EUC-JP");
 		$mailer->setCharSet("UTF-8");
-		$value = $makeAddressTextFromAddresses->invokeArgs($mailer, array(array()));
+		$value = $makeAddressTextFromAddresses->invokeArgs($mailer, [[]]);
 		$this->assertEquals('', $value);
 		
-		$value = $makeAddressTextFromAddresses->invokeArgs($mailer, array(array(array('test@example.com', 'test'))));
+		$value = $makeAddressTextFromAddresses->invokeArgs($mailer, [[['test@example.com', 'test']]]);
 		$this->assertEquals('test <test@example.com>', $value);
 		
-		$value = $makeAddressTextFromAddresses->invokeArgs($mailer, array(array(array('test@example.com', 'test'),array('test1@example.com', ''))));
+		$value = $makeAddressTextFromAddresses->invokeArgs($mailer, [[['test@example.com', 'test'],['test1@example.com', '']]]);
 		$this->assertEquals('test <test@example.com>,test1@example.com', $value);
 	}
 	
@@ -382,11 +406,10 @@ class InnerSessionTest extends PHPUnit_Framework_TestCase
 		$mailer = new SimpleMailer();
 		$mailer->setFromEncoding("EUC-JP");
 		$mailer->setCharSet("UTF-8");
-		$value = $makeAddressText->invokeArgs($mailer, array('test@example.com', ''));
+		$value = $makeAddressText->invokeArgs($mailer, ['test@example.com', '']);
 		$this->assertEquals('test@example.com', $value);
 		
-		$value = $makeAddressText->invokeArgs($mailer, array('test@example.com', 'test'));
+		$value = $makeAddressText->invokeArgs($mailer, ['test@example.com', 'test']);
 		$this->assertEquals('test <test@example.com>', $value);
 	}
 }
-?>

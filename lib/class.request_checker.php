@@ -1,6 +1,6 @@
 <?php
-require_once(dirname(__FILE__).'/common.php');
-require_once(dirname(__FILE__).'/class.inner_session.php');
+require_once __DIR__ . '/common.php';
+require_once __DIR__ . '/class.inner_session.php';
 
 /**
  * RequestChecker
@@ -11,45 +11,55 @@ require_once(dirname(__FILE__).'/class.inner_session.php');
  * ※CSRFのチェックをする場合は、
  * 　getCSRFHiddenForm関数で、フォーム内にタグを入れる必要あります。
  */
-class RequestChecker {
+class RequestChecker
+{
 	const TOKEN_LENGTH = 64; // トークンのバイト数
 	const CSRF_TOKEN_NAME = 'csrf_token'; // CSRFチェック用のタグ名
 
-	protected $token  = NULL; // トークン
-	protected $SessionFactory = NULL;          // SessionInterfaceを実装したオブジェクト
-	
-	function __construct() {
+	protected $token = null; // トークン
+	protected $SessionFactory = null; // SessionInterfaceを実装したオブジェクト
+
+	public function __construct()
+	{
 	}
-	
+
 	/**
 	 * セッション管理クラスのファクトリーを設定する。
-	 * SessionFactoryInterfaceを実装したオブジェクトを指定してください。
 	 *
-	 * @param string $factory SessionFactoryオブジェクト
+	 * @param SessionFactoryInterface $factory SessionFactoryオブジェクト
+	 * @throws InvalidArgumentException $factoryがインターフェースを実装していない場合
 	 */
-	public function setSessionFactory($factory) {
-		if (!($factory instanceof SessionFactoryInterface)) assert('Please set implement class of SessionFactoryInterface');
+	public function setSessionFactory($factory)
+	{
+		if (!($factory instanceof SessionFactoryInterface)) {
+			throw new InvalidArgumentException('Please set implement class of SessionFactoryInterface');
+		}
 		$this->SessionFactory = $factory;
 	}
-	
+
 	/**
 	 * セッション管理クラスのインスタンスを取得します。
-	 * @return SessionFactoryInterfaceを実装したオブジェクト
+	 * @return SessionInterface
 	 */
-	protected function getSession() {
+	protected function getSession()
+	{
 		if (!$this->SessionFactory) {
 			$this->SessionFactory = new InnerSessionFactory();
 		}
 		return $this->SessionFactory->getInstance();
 	}
-	
+
 	/**
 	 * トークンを作成する。
 	 *
 	 * @return string トークン
 	 */
-	protected function createCsrfToken() {
-		$bytes = openssl_random_pseudo_bytes(self::TOKEN_LENGTH/2);
+	protected function createCsrfToken()
+	{
+		if (function_exists('random_bytes')) {
+			return bin2hex(random_bytes(self::TOKEN_LENGTH / 2));
+		}
+		$bytes = openssl_random_pseudo_bytes(self::TOKEN_LENGTH / 2);
 		return bin2hex($bytes);
 	}
 
@@ -58,7 +68,8 @@ class RequestChecker {
 	 *
 	 * @return string トークン
 	 */
-	protected function getCsrfToken() {
+	protected function getCsrfToken()
+	{
 		if (!$this->token) {
 			if ($this->getSession()->isSetParam(self::CSRF_TOKEN_NAME)) {
 				$this->token = $this->getSession()->getParamValue(self::CSRF_TOKEN_NAME);
@@ -70,13 +81,18 @@ class RequestChecker {
 		}
 		return $this->token;
 	}
-	
+
 	/**
 	 * リファラをチェックする。
 	 *
 	 * @return bool 正常かどうか
 	 */
-	public function checkReferer() {
+	public function checkReferer()
+	{
+		if (!isset($_SERVER['HTTP_REFERER'])) {
+			return false;
+		}
+
 		if (strpos($_SERVER['HTTP_REFERER'], __getBaseUrl()) === 0) {
 			return true;
 		}
@@ -89,8 +105,9 @@ class RequestChecker {
 	 * @param array $param 通常_POSTパラメータを設定する
 	 * @return bool 正常かどうか
 	 */
-	public function check($param) {
-		if (empty($param)) {
+	public function check($param)
+	{
+		if (!is_array($param) || empty($param)) {
 			return true;
 		}
 
@@ -105,6 +122,7 @@ class RequestChecker {
 		if ($param[self::CSRF_TOKEN_NAME] !== $this->getCsrfToken()) {
 			return false;
 		}
+
 		return true;
 	}
 
@@ -113,8 +131,8 @@ class RequestChecker {
 	 *
 	 * @return string フォームタグ
 	 */
-	public function getCSRFHiddenForm() {
+	public function getCSRFHiddenForm()
+	{
 		return '<input type="hidden" name="'.self::CSRF_TOKEN_NAME.'" value="'.$this->getCsrfToken().'" >';
 	}
 }
-?>

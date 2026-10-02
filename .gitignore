@@ -1,0 +1,33 @@
+# ==============================================================================
+# Composer & Production-Banned Dependencies
+# ==============================================================================
+# Absolutely deny uploading the vendor directory to production
+/vendor/
+/vendor56/
+composer.lock
+composer.json
+
+# ==============================================================================
+# Development Tool & Caches
+# ==============================================================================
+.php-cs-fixer.cache
+.phpunit.cache/
+.phpunit.result.cache
+
+docker-compose.yml
+Dockerfile.php56
+
+.sass-cache
+bower_components
+node_modules
+.svn
+.node-version
+
+# ==============================================================================
+# OS & Editor Files (Optional but Recommended)
+# ==============================================================================
+.DS_Store
+Thumbs.db
+.vscode/
+
+external/

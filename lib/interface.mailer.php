@@ -4,7 +4,8 @@
  *
  * メール送信クラスのラッパークラス
  */
-interface MailerInterface {
+interface MailerInterface
+{
 
 	/**
 	 * エンコード元の文字コードを設定する。
@@ -12,47 +13,47 @@ interface MailerInterface {
 	 * @param string $value エンコード元の文字コード
 	 */
 	public function setFromEncoding($value);
-	
+
 	/**
 	 * 差出人を設定する。
 	 *
 	 * @param string $address メールアドレス
 	 * @param string $name 名前
+	 * @param bool $auto
 	 */
 	public function setFrom($address, $name = '', $auto = true);
-	
+
 	/**
-	 * 送信元を設定する。
+	 * 送信先を追加する。
 	 *
 	 * @param string $address メールアドレス
 	 * @param string $name 名前
 	 */
-	public function addAddress($address,$name='');
-	
+	public function addAddress($address, $name = '');
+
 	/**
 	 * CCを設定する。
 	 *
 	 * @param string $address メールアドレス
 	 * @param string $name 名前
 	 */
-	public function addCc($address,$name='');
-	
-	
+	public function addCc($address, $name = '');
+
 	/**
 	 * Bccを設定する。
 	 *
 	 * @param string $address メールアドレス
 	 * @param string $name 名前
 	 */
-	public function addBcc($address,$name='');
-	
+	public function addBcc($address, $name = '');
+
 	/**
 	 * ReplyToを設定する。
 	 *
 	 * @param string $address メールアドレス
 	 * @param string $name 名前
 	 */
-	public function setReplyTo($address,$name='');
+	public function setReplyTo($address, $name = '');
 
 	/**
 	 * ReturnPathを設定する。
@@ -81,9 +82,9 @@ interface MailerInterface {
 	 * 本文をセットする。
 	 *
 	 * @param string $body 本文
-	 * @param string $isHtml HTML有無(任意)
+	 * @param bool $isHtml HTML有無(任意)
 	 */
-	public function setBody($body, $isHtml=false);
+	public function setBody($body, $isHtml = false);
 
 	/**
 	 * 代替え本文をセットする。
@@ -98,7 +99,7 @@ interface MailerInterface {
 	 * @param string $key キー名
 	 * @param string $value 値
 	 */
-	public function addHeader($key,$value);
+	public function addHeader($key, $value);
 
 	/**
 	 * 添付ファイルを追加する
@@ -120,6 +121,7 @@ interface MailerInterface {
  *
  * Mailerを作成するファクトリーインタフェース
  */
-interface MailerFactoryInterface {
+interface MailerFactoryInterface
+{
 	public function getInstance();
 }

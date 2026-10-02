@@ -1,13 +1,16 @@
 <?php
-require_once(dirname(__FILE__).'/interfece.mailer.php');
-require(dirname(__FILE__).'/../external/phpmailer/class.phpmailer.php');
+require_once __DIR__ . '/interface.mailer.php';
+require_once __DIR__ . '/../external/phpmailer/class.phpmailer.php';
 
 /**
  * EncodePHPMailer用のファクトリクラス
+ * 互換コード、php8系の対応しない
  *
  */
-class EncodePHPMailerFactory implements MailerFactoryInterface {
-	public function getInstance() {
+class EncodePHPMailerFactory implements MailerFactoryInterface
+{
+	public function getInstance()
+	{
 		return new EncodePHPMailer();
 	}
 }
@@ -18,11 +21,13 @@ class EncodePHPMailerFactory implements MailerFactoryInterface {
  * PHPMailerのラッパー主に文字コード変換用
  * コメントが無い関数は、overwriteした関数
  */
-class EncodePHPMailer extends PHPMailer implements MailerInterface {
+class EncodePHPMailer extends PHPMailer implements MailerInterface
+{
 	public $ToEncoding = 'UTF8';   // 変換元のエンコード
 	public $FromEncoding = 'UTF8'; // 変換後のエンコード
 
-	public function __construct($exceptions = false) {
+	public function __construct($exceptions = false)
+	{
 		parent::__construct($exceptions);
 		$this->FromEncoding = mb_internal_encoding();
 		$this->ToEncoding = mb_internal_encoding();
@@ -33,7 +38,8 @@ class EncodePHPMailer extends PHPMailer implements MailerInterface {
 	 *
 	 * @param string $value エンコード元の文字コード
 	 */
-	public function setFromEncoding($value) {
+	public function setFromEncoding($value)
+	{
 		$this->FromEncoding = $value;
 	}
 
@@ -43,7 +49,8 @@ class EncodePHPMailer extends PHPMailer implements MailerInterface {
 	 * @param string $address メールアドレス
 	 * @param string $name 名前
 	 */
-	public function setEncode($value) {
+	public function setEncode($value)
+	{
 		$this->Encoding = $value;
 	}
 	
@@ -53,11 +60,12 @@ class EncodePHPMailer extends PHPMailer implements MailerInterface {
 	 * @param string $address メールアドレス
 	 * @param string $name 名前
 	 */
-	public function setFrom($address, $name = '', $auto = true){
-		if ($name){
+	public function setFrom($address, $name = '', $auto = true)
+	{
+		if ($name) {
 			$name = $this->encode($name);
 		}
-		parent::setFrom($address,$name,$auto);
+		parent::setFrom($address, $name, $auto);
 	}
 	
 	/**
@@ -66,11 +74,12 @@ class EncodePHPMailer extends PHPMailer implements MailerInterface {
 	 * @param string $address メールアドレス
 	 * @param string $name 名前
 	 */
-	public function addAddress($address,$name='') {
-		if ($name){
+	public function addAddress($address, $name='')
+	{
+		if ($name) {
 			$name = $this->encode($name);
 		}
-		parent::addAddress($address,$name);
+		parent::addAddress($address, $name);
 	}
 	
 	/**
@@ -79,11 +88,12 @@ class EncodePHPMailer extends PHPMailer implements MailerInterface {
 	 * @param string $address メールアドレス
 	 * @param string $name 名前
 	 */
-	public function addCc($address,$name='') {
-		if ($name){
+	public function addCc($address, $name='')
+	{
+		if ($name) {
 			$name = $this->encode($name);
 		}
-		parent::addCc($address,$name);
+		parent::addCc($address, $name);
 	}
 	
 	/**
@@ -92,11 +102,12 @@ class EncodePHPMailer extends PHPMailer implements MailerInterface {
 	 * @param string $address メールアドレス
 	 * @param string $name 名前
 	 */
-	public function addBcc($address,$name='') {
-		if ($name){
+	public function addBcc($address, $name='')
+	{
+		if ($name) {
 			$name = $this->encode($name);
 		}
-		parent::addBcc($address,$name);
+		parent::addBcc($address, $name);
 	}
 	
 	/**
@@ -105,11 +116,12 @@ class EncodePHPMailer extends PHPMailer implements MailerInterface {
 	 * @param string $address メールアドレス
 	 * @param string $name 名前
 	 */
-	public function setReplyTo($address,$name='') {
-		if ($name){
+	public function setReplyTo($address, $name='')
+	{
+		if ($name) {
 			$name = $this->encode($name);
 		}
-		parent::setReplyTo($address,$name);
+		parent::AddReplyTo($address, $name);
 	}
 
 	/**
@@ -118,8 +130,9 @@ class EncodePHPMailer extends PHPMailer implements MailerInterface {
 	 * @param string $address アドレス
 	 * @param string $name 名前
 	 */
-	public function setReturnPath($address, $name = ''){
-		if ($name){
+	public function setReturnPath($address, $name = '')
+	{
+		if ($name) {
 			$name = $this->encode($name);
 		}
 		$this->Sender = $name.'<'.$address.'>';
@@ -131,7 +144,8 @@ class EncodePHPMailer extends PHPMailer implements MailerInterface {
 	 *
 	 * @param string $charset CharSet
 	 */
-	public function setCharSet($charset) {
+	public function setCharSet($charset)
+	{
 		$this->ToEncoding = $charset;
 		$this->CharSet = $charset;
 	}
@@ -141,7 +155,8 @@ class EncodePHPMailer extends PHPMailer implements MailerInterface {
 	 *
 	 * @param string $subject サブジェクト
 	 */
-	public function setSubject($subject){
+	public function setSubject($subject)
+	{
 		$this->Subject = $this->encode($subject);
 	}
 
@@ -151,7 +166,8 @@ class EncodePHPMailer extends PHPMailer implements MailerInterface {
 	 * @param string $body 本文
 	 * @param string $isHtml HTML有無(任意)
 	 */
-	public function setBody($body, $isHtml=false){
+	public function setBody($body, $isHtml=false)
+	{
 		$this->Body = $this->encode($body);
 		$this->IsHtml($isHtml);
 	}
@@ -161,8 +177,9 @@ class EncodePHPMailer extends PHPMailer implements MailerInterface {
 	 *
 	 * @param string $value 値
 	 */
-	protected function encode($value){
-		return mb_convert_encoding($value,$this->ToEncoding,$this->FromEncoding);
+	protected function encode($value)
+	{
+		return mb_convert_encoding($value, $this->ToEncoding, $this->FromEncoding);
 	}
 
 	/**
@@ -170,8 +187,9 @@ class EncodePHPMailer extends PHPMailer implements MailerInterface {
 	 *
 	 * @param string $altbody 本文
 	 */
-	public function setAltBody($altbody){
-		$this->AltBody = mb_convert_encoding($altbody,$this->ToEncoding,$this->FromEncoding);
+	public function setAltBody($altbody)
+	{
+		$this->AltBody = mb_convert_encoding($altbody, $this->ToEncoding, $this->FromEncoding);
 	}
 
 	/**
@@ -180,11 +198,12 @@ class EncodePHPMailer extends PHPMailer implements MailerInterface {
 	 * @param string $key キー名
 	 * @param string $value 値
 	 */
-	public function addHeader($key,$value){
-		if (!$value){
+	public function addHeader($key, $value)
+	{
+		if (!$value) {
 			return;
 		}
-		$this->addCustomHeader($key.':'.$this->encodeForMime(mb_convert_encoding($value,$this->ToEncoding,$this->FromEncoding)));
+		$this->addCustomHeader($key.':'.$this->encodeForMime(mb_convert_encoding($value, $this->ToEncoding, $this->FromEncoding)));
 	}
 
 	/**
@@ -192,17 +211,17 @@ class EncodePHPMailer extends PHPMailer implements MailerInterface {
 	 *
 	 * @param string $value 値
 	 */
-	protected function encodeForMime($value){
+	protected function encodeForMime($value)
+	{
 		return $value;
 	}
-
 
 	protected function attachAll($disposition_type, $boundary)
 	{
 		// Return text of body
-		$mime = array();
-		$cidUniq = array();
-		$incl = array();
+		$mime = [];
+		$cidUniq = [];
+		$incl = [];
 
 		// Add all attachments
 		foreach ($this->attachment as $attachment) {
@@ -252,23 +271,23 @@ class EncodePHPMailer extends PHPMailer implements MailerInterface {
 				// Fixes a warning in IETF's msglint MIME checker
 				// Allow for bypassing the Content-Disposition header totally
 				if (!(empty($disposition))) {
-				// ここを書き換えてます
-				/*
-					if (preg_match('/[ \(\)<>@,;:\\"\/\[\]\?=]/', $name)) {
-						$mime[] = sprintf(
-							"Content-Disposition: %s; filename=\"%s\"%s",
-							$disposition,
-							$this->encodeHeader($this->secureHeader($name)),
-							$this->LE . $this->LE
-						);
-					} else {
-						$mime[] = sprintf(
-							"Content-Disposition: %s; filename=%s%s",
-							$disposition,
-							$this->encodeHeader($this->secureHeader($name)),
-							$this->LE . $this->LE
-						);
-					}*/
+					// ここを書き換えてます
+					/*
+						if (preg_match('/[ \(\)<>@,;:\\"\/\[\]\?=]/', $name)) {
+							$mime[] = sprintf(
+								"Content-Disposition: %s; filename=\"%s\"%s",
+								$disposition,
+								$this->encodeHeader($this->secureHeader($name)),
+								$this->LE . $this->LE
+							);
+						} else {
+							$mime[] = sprintf(
+								"Content-Disposition: %s; filename=%s%s",
+								$disposition,
+								$this->encodeHeader($this->secureHeader($name)),
+								$this->LE . $this->LE
+							);
+						}*/
 					$mime[] = sprintf(
 						"Content-Disposition: %s; %s%s%s",
 						$disposition,
@@ -318,7 +337,7 @@ class EncodePHPMailer extends PHPMailer implements MailerInterface {
 				$start = 0;
 				$base_length = strlen($base);
 				$count = 0;
-				while($base_length >= $start) {
+				while ($base_length >= $start) {
 					$filename = ' filename*'.$count.'*=';
 					if ($count === 0) {
 						$filename.= "UTF-8''";

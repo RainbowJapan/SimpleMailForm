@@ -1,12 +1,14 @@
 <?php
-require_once(dirname(__FILE__).'/../../lib/interfece.session.php');
+require_once(dirname(__FILE__).'/../../lib/interface.session.php');
 /**
  * SimpleMailer用のファクトリクラス
  *
  */
-class TestSessionFactory implements SessionFactoryInterface {
+class TestSessionFactory implements SessionFactoryInterface
+{
 	private static $Instance = null; // インスタンス
-	public function getInstance() {
+	public function getInstance()
+	{
 		if (is_null(self::$Instance)) {
 			self::$Instance = new TestSession;
 		}
@@ -18,26 +20,30 @@ class TestSessionFactory implements SessionFactoryInterface {
  * セッションを管理ラッパークラス
  *
  */
-class TestSession implements SessionInterface {
-	 protected $array = array();
+class TestSession implements SessionInterface
+{
+	protected $array = [];
 	/**
 	 * コンストラクタ
 	 */
-	public function __construct() {
+	public function __construct()
+	{
 	}
 	
 	/**
 	 * セッションが開始されていない場合、セッションを開始する。
 	 *
 	 */
-	public function startSession() {
+	public function startSession()
+	{
 	}
 
 	/**
 	 * セッションが開始されている場合、セッションを終了する。
 	 *
 	 */
-	public function destroySession() {
+	public function destroySession()
+	{
 	}
 	
 	/**
@@ -45,7 +51,8 @@ class TestSession implements SessionInterface {
 	 *
 	 * @return bool セッション開始有無
 	 */
-	public function isStartSession() {
+	public function isStartSession()
+	{
 		return isset($this->array);
 	}
 	/**
@@ -54,7 +61,8 @@ class TestSession implements SessionInterface {
 	 * @param string $name セッションパラメータ名
 	 * @return bool 存在有無
 	 */
-	public function isSetParam($name) {
+	public function isSetParam($name)
+	{
 		if (!$this->isStartSession()) {
 			return false;
 		}
@@ -66,7 +74,8 @@ class TestSession implements SessionInterface {
 	 *
 	 * @param string $name セッションパラメータ名
 	 */
-	public function unnsetParam($name) {
+	public function unsetParam($name)
+	{
 		if (!$this->isStartSession()) {
 			return;
 		}
@@ -79,8 +88,9 @@ class TestSession implements SessionInterface {
 	 * @param string $name セッションパラメータ名
 	 * @param string $value 値
 	 * @return bool 成功有無
-	 */	
-	public function setParam($name, $value) {
+	 */
+	public function setParam($name, $value)
+	{
 		if (!$this->isStartSession()) {
 			return false;
 		}
@@ -94,14 +104,14 @@ class TestSession implements SessionInterface {
 	 * @param string $name セッションパラメータ名
 	 * @return obj 値
 	 */
-	public function getParamValue($name) {
+	public function getParamValue($name)
+	{
 		if (!$this->isStartSession()) {
-			return NULL;
+			return null;
 		}
 		if (!isset($this->array[$name])) {
-			return NULL;
+			return null;
 		}
 		return $this->array[$name];
 	}
 }
-?>

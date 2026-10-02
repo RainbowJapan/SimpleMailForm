@@ -15,20 +15,19 @@ require_once(dirname(__FILE__)."/form.php");
 	<div id="formarea">
 		<form method="post" action="confirm.php" name="contactform">
 <?php
-	if($mailform->isError()) { ?>
+	if ($mailform->isError()) { ?>
 			<div class="errorbox">
 				<p>エラー</p>
 				<ul>
 <?php
 	$errors = $mailform->getErrorMessages();
-	foreach ($errors as $message) {
-		__p( "					<li>".$message."</li>");
-	}
-?>
+		foreach ($errors as $message) {
+			__p("					<li>".$message."</li>");
+		}
+		?>
 				</ul>
 			</div>
 <?php } ?>
-</select>
 			<div class="inputbox">
 				<strong>※印は、必須</strong>
 				<table>
@@ -76,14 +75,18 @@ require_once(dirname(__FILE__)."/form.php");
 						<td>
 							<ul>
 <?php
-	$selectvalues = $mailform->getSelectValues('interesting_items');
-	$selectedvalues = $mailform->getValue('interesting_items');
-	if (!$selectedvalues) $selectedvalues = [];
-	foreach($selectvalues as $key => &$value) {
-?>
+			$selectvalues = $mailform->getSelectValues('interesting_items');
+$selectedvalues = $mailform->getValue('interesting_items');
+if (!is_array($selectedvalues)) {
+	$selectedvalues = [];
+}
+if (is_array($selectvalues)) {
+	foreach ($selectvalues as $key => $value) {
+		?>
 							<label><input type="checkbox" name="interesting_items[]" value="<?php __e($key) ?>" <?php __pchecked(in_array($key, $selectedvalues)) ?> ><?php __p($value) ?></label><br />
 <?php
 	}
+}
 ?>
 						</td>
 					</tr>

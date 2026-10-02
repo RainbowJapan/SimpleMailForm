@@ -1,19 +1,18 @@
 <?php
 /**
- * MailerInterface
+ * SessionInterface
  *
- * メール送信クラスのラッパークラス
+ * セッション管理クラスのインタフェース
  */
-interface SessionInterface {
+interface SessionInterface
+{
 	/**
 	 * セッションが開始されていない場合、セッションを開始する。
-	 *
 	 */
 	public function startSession();
 	
 	/**
 	 * セッションが開始されている場合、セッションを終了する。
-	 *
 	 */
 	public function destroySession();
 	
@@ -37,7 +36,7 @@ interface SessionInterface {
 	 *
 	 * @param string $name セッションパラメータ名
 	 */
-	public function unnsetParam($name);
+	public function unsetParam($name);
 	
 	/**
 	 * セッションパラメータの値を設定する。
@@ -45,14 +44,14 @@ interface SessionInterface {
 	 * @param string $name セッションパラメータ名
 	 * @param string $value 値
 	 * @return bool 成功有無
-	 */	
+	 */
 	public function setParam($name, $value);
 	
 	/**
 	 * セッションパラメータの値を取得する。
 	 *
 	 * @param string $name セッションパラメータ名
-	 * @return obj 値
+	 * @return mixed
 	 */
 	public function getParamValue($name);
 }
@@ -62,6 +61,7 @@ interface SessionInterface {
  *
  * Sessionクラスを作成するファクトリーインタフェース
  */
-interface SessionFactoryInterface {
+interface SessionFactoryInterface
+{
 	public function getInstance();
 }

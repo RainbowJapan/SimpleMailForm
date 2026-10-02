@@ -1,19 +1,28 @@
 <?php
 
-function __getBaseUrl(){
+function __getBaseUrl()
+{
+	$https = isset($_SERVER['HTTPS']) ? $_SERVER['HTTPS'] : '';
+	$server_name = isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : 'localhost';
+	
 	return sprintf(
 		'%s://%s',
-		isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' ? 'https' : 'http',
-		$_SERVER['SERVER_NAME']
+		$https !== '' && $https !== 'off' ? 'https' : 'http',
+		$server_name
 	);
 }
 
 // こちらをベースにしています。
 // http://memo.xight.org/2006-06-19-13
-function __replaceGreekingText($str) {
-	static $replaceArray;
-	if (!$replaceArray) {
-		$replaceArray = array(
+function __replaceGreekingText($str)
+{
+	if (is_array($str)) {
+		return '';
+	}
+	$str = (string)$str;
+	static $replaceArray = null;
+	if ($replaceArray === null) {
+		$replaceArray = [
 			/* --- 0x2100 - 0x2138 (文字種記号) --- */
 			// 0x2100 - 0x210F
 			"\xE2\x84\x80" => "a/c",
@@ -884,9 +893,7 @@ function __replaceGreekingText($str) {
 			"\xE3\x8F\xBC" => "29日",
 			"\xE3\x8F\xBD" => "30日",
 			"\xE3\x8F\xBE" => "31日",
-		);
+		];
 	}
-	return str_replace( array_keys($replaceArray), array_values($replaceArray), $str);
+	return str_replace(array_keys($replaceArray), array_values($replaceArray), $str);
 }
-
-?>
