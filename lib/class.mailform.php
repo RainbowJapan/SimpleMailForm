@@ -51,6 +51,7 @@ class MailForm
 	const ERROR_CODE_NO_AGREEMENT = 41;        // 同意していない場合
 	const ERROR_CODE_OVER_MAXLENGTH = 42;      // 文字列が最大長より長い場合
 	const ERROR_CODE_NOT_YOMI_PARAM = 43;      // 全角ひらがなでない場合
+	const ERROR_CODE_UNDER_MINLENGTH = 44;     // 文字列が最小長より短い場合
 
 	public $CharSet = 'utf8';                  // メールの文字コード
 	public $MailEncoding = '7bit';             // メールのエンコード
@@ -104,6 +105,7 @@ class MailForm
 										self::ERROR_CODE_NOT_SAME_PARAM => '「%s」は「%s」と同じ値を入力してください。',
 										self::ERROR_CODE_INVALID_SELECT_PARAM => '「%s」に不正な値が入力されています。',
 										self::ERROR_CODE_NO_AGREEMENT => '同意していただく必要があります。',
+										self::ERROR_CODE_UNDER_MINLENGTH => '「%s」は、%s文字以上でご記入ください。',
 										self::ERROR_CODE_OVER_MAXLENGTH => '「%s」は、%s文字以内でご記入ください。',
 										self::ERROR_CODE_NOT_YOMI_PARAM => '「%s」はひらがなで入力してください。',
 								];
@@ -1497,6 +1499,14 @@ class MailForm
 			}
 		}
 
+		if (isset($config['minlength'])) {
+			if (mb_strlen($inputValue) < $config['minlength']) {
+				$this->setErrorMessage($key, self::ERROR_CODE_UNDER_MINLENGTH, $config['title'], $config['minlength']);
+				$ret = false;
+				return true;
+			}
+		}
+		
 		if (isset($config['maxlength'])) {
 			if (mb_strlen($inputValue) > $config['maxlength']) {
 				$this->setErrorMessage($key, self::ERROR_CODE_OVER_MAXLENGTH, $config['title'], $config['maxlength']);

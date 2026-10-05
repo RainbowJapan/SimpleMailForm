@@ -1587,6 +1587,22 @@ EOT;
 		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertTrue($ret);
 		
+		// minlengthのチェック、minlengthと同じ長さ
+		$mailform = new MailForm();
+		$ret = true;
+		$RequestParam->setValue($mailform, ['key' => '文字列']);
+		$values = ['value' => 'string', 'empty' => false, 'title'=> 'title', 'minlength' => 3];
+		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
+		$this->assertTrue($ret);
+		
+		// minlengthのチェック、minlengthより短い
+		$RequestParam->setValue($mailform, ['key' => '短い']);
+		$values = ['value' => 'string', 'empty' => false, 'title'=> 'title', 'minlength' => 3];
+		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
+		$this->assertFalse($ret);
+		$this->assertEquals(MailForm::ERROR_CODE_UNDER_MINLENGTH, $ErrorCode->getValue($mailform));
+		$this->assertEquals('「title」は、3文字以上でご記入ください。', $ErrorMessages->getValue($mailform)['key']);
+		
 		// maxlengthのチェック、maxlengthと同じ長さ
 		$mailform = new MailForm();
 		$ret = true;
