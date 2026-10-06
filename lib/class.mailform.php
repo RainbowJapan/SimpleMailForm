@@ -89,26 +89,26 @@ class MailForm
 
 	// エラーメッセージの定義
 	protected $ErrorCodeMessages = [
-										self::ERROR_UNKNOWN  => 'エラーが発生しています。',
-										self::ERROR_CODE_NOSET_TO  => 'システムエラーが発生しました。',
-										self::ERROR_CODE_INVALID_FORM_CONFIG  => 'システムエラーが発生しました。',
-										self::ERROR_CODE_TEMP_FILE  => 'システムエラーが発生しました。',
-										self::ERROR_CODE_CANNOT_SEND  => 'メールを送ることができませんでした。',
-										self::ERROR_CODE_NOT_NULL_PARAM  => '「%s」は必ず入力してください。',
-										self::ERROR_CODE_NEED_SELECT_PARAM => '「%s」は必ず選択してください。',
-										self::ERROR_CODE_INVALID_PARAM  => '「%s」の値は入力できない値です。',
-										self::ERROR_CODE_UNKNOWN_FILE_FORMAT  => 'アップロードファイル「%s」のファイル形式には対応してません。',
-										self::ERROR_CODE_NOT_KANA_PARAM  => '「%s」はカタカナで入力してください。',
-										self::ERROR_CODE_NOT_PLUS_PARAM => '「%s」は数字で入力してください。',
-										self::ERROR_CODE_TEL_PARAM => '「%s」は電話番号を入力してください。',
-										self::ERROR_CODE_NOT_EMAIL_PARAM => '「%s」は正しいメールアドレスを入力してください。',
-										self::ERROR_CODE_NOT_SAME_PARAM => '「%s」は「%s」と同じ値を入力してください。',
-										self::ERROR_CODE_INVALID_SELECT_PARAM => '「%s」に不正な値が入力されています。',
-										self::ERROR_CODE_NO_AGREEMENT => '同意していただく必要があります。',
-										self::ERROR_CODE_UNDER_MINLENGTH => '「%s」は、%s文字以上でご記入ください。',
-										self::ERROR_CODE_OVER_MAXLENGTH => '「%s」は、%s文字以内でご記入ください。',
-										self::ERROR_CODE_NOT_YOMI_PARAM => '「%s」はひらがなで入力してください。',
-								];
+	self::ERROR_UNKNOWN  => 'エラーが発生しています',
+	self::ERROR_CODE_NOSET_TO  => 'システムエラーが発生しました',
+	self::ERROR_CODE_INVALID_FORM_CONFIG  => 'システム設定エラーが発生しました',
+	self::ERROR_CODE_TEMP_FILE  => 'ファイルシステムエラーが発生しました',
+	self::ERROR_CODE_CANNOT_SEND  => 'メールを送ることができませんでした',
+	self::ERROR_CODE_NOT_NULL_PARAM  => '「%s」は必ずご入力ください',
+	self::ERROR_CODE_NEED_SELECT_PARAM => '「%s」は必ず選択してください',
+	self::ERROR_CODE_INVALID_PARAM  => '「%s」の値は入力できない値です',
+	self::ERROR_CODE_UNKNOWN_FILE_FORMAT  => 'アップロードファイル「%s」のファイル形式には対応してません',
+	self::ERROR_CODE_NOT_KANA_PARAM  => '「%s」は全角カナでご入力ください',
+	self::ERROR_CODE_NOT_PLUS_PARAM => '「%s」は半角数字でご入力ください',
+	self::ERROR_CODE_TEL_PARAM => '「%s」は半角数字でご入力ください',
+	self::ERROR_CODE_NOT_EMAIL_PARAM => '「%s」のメールアドレスは正しい形式でご入力ください',
+	self::ERROR_CODE_NOT_SAME_PARAM => '「%s」が「%s」と同じではありません',
+	self::ERROR_CODE_INVALID_SELECT_PARAM => '「%s」に不正な値が入力されています',
+	self::ERROR_CODE_NO_AGREEMENT => '同意していただく必要があります',
+	self::ERROR_CODE_UNDER_MINLENGTH => '「%s」は%s文字以下でご入力ください',
+	self::ERROR_CODE_OVER_MAXLENGTH => '「%s」は%s文字以上でご入力ください',
+	self::ERROR_CODE_NOT_YOMI_PARAM => '「%s」は全角かなでご入力ください',
+	];
 
 	/**
 	 * テンプレートURLを取得する。

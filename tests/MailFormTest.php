@@ -127,21 +127,21 @@ class MailFormTest extends SimpleMailForm_TestCase
 		$this->assertEquals(MailForm::ERROR_CODE_NOT_NULL_PARAM, $ErrorCode->getValue($mailform));
 		$errorMessages = $ErrorMessages->getValue($mailform);
 		$this->assertArrayHasKey('key', $errorMessages);
-		$this->assertEquals('「title」は必ず入力してください。', $errorMessages['key']);
+		$this->assertEquals('「title」は必ずご入力ください', $errorMessages['key']);
 		
 		$mailform->setErrorMessage('key2', 100000, "title2");
 		$this->assertEquals(100000, $ErrorCode->getValue($mailform));
 		$errorMessages = $ErrorMessages->getValue($mailform);
 		$this->assertCount(2, $errorMessages);
 		$this->assertArrayHasKey('key2', $errorMessages);
-		$this->assertEquals('エラーが発生しています。', $errorMessages['key2']);
+		$this->assertEquals('エラーが発生しています', $errorMessages['key2']);
 		
 		$mailform->setErrorMessage(MailForm::BASE_ERROR_KEY, MailForm::ERROR_CODE_INVALID_FORM_CONFIG);
 		$this->assertEquals(MailForm::ERROR_CODE_INVALID_FORM_CONFIG, $ErrorCode->getValue($mailform));
 		$errorMessages = $ErrorMessages->getValue($mailform);
 		$this->assertCount(1, $errorMessages);
 		$this->assertArrayHasKey(MailForm::BASE_ERROR_KEY, $errorMessages);
-		$this->assertEquals('システムエラーが発生しました。', $errorMessages[MailForm::BASE_ERROR_KEY]);
+		$this->assertEquals('システム設定エラーが発生しました', $errorMessages[MailForm::BASE_ERROR_KEY]);
 	}
 	
 	public function testIsCriticalError()
@@ -176,9 +176,9 @@ class MailFormTest extends SimpleMailForm_TestCase
 		$this->assertEquals('', $mailform->getErrorMessage());
 		
 		$mailform->setErrorMessage('key1', MailForm::ERROR_CODE_NOT_NULL_PARAM, "title1");
-		$this->assertEquals("\n「title1」は必ず入力してください。", $mailform->getErrorMessage());
+		$this->assertEquals("\n「title1」は必ずご入力ください", $mailform->getErrorMessage());
 		$mailform->setErrorMessage('key2', MailForm::ERROR_CODE_NOT_NULL_PARAM, "title2");
-		$this->assertEquals("\n「title1」は必ず入力してください。\n「title2」は必ず入力してください。", $mailform->getErrorMessage());
+		$this->assertEquals("\n「title1」は必ずご入力ください\n「title2」は必ずご入力ください", $mailform->getErrorMessage());
 	}
 	
 	public function testGetErrorMessages()
@@ -187,13 +187,13 @@ class MailFormTest extends SimpleMailForm_TestCase
 		$this->assertEquals([], $mailform->getErrorMessages());
 		
 		$mailform->setErrorMessage('key1', MailForm::ERROR_CODE_NOT_NULL_PARAM, "title1");
-		$this->assertEquals(['「title1」は必ず入力してください。'], $mailform->getErrorMessages());
+		$this->assertEquals(['「title1」は必ずご入力ください'], $mailform->getErrorMessages());
 		
 		$mailform->setErrorMessage('key2', MailForm::ERROR_CODE_NOT_NULL_PARAM, "title1");
-		$this->assertEquals(['「title1」は必ず入力してください。'], $mailform->getErrorMessages());
+		$this->assertEquals(['「title1」は必ずご入力ください'], $mailform->getErrorMessages());
 		
 		$mailform->setErrorMessage('key3', MailForm::ERROR_CODE_NOT_NULL_PARAM, "title3");
-		$this->assertEquals(['「title1」は必ず入力してください。','「title3」は必ず入力してください。'], $mailform->getErrorMessages());
+		$this->assertEquals(['「title1」は必ずご入力ください','「title3」は必ずご入力ください'], $mailform->getErrorMessages());
 	}
 	
 	public function testGetMailConfigByIndex()
@@ -875,7 +875,7 @@ EOT;
 		$session = $factory->getInstance();
 		
 		$requestParameter = ['kind' => 1];
-		$errorMessages = ['username', '「username」は必ず入力してください。'];
+		$errorMessages = ['username', '「username」は必ずご入力ください'];
 		$ErrorMessages->setValue($mailform, $errorMessages);
 		$mailform->setRequestParameter($requestParameter);
 		
@@ -907,7 +907,7 @@ EOT;
 		$session = $factory->getInstance();
 		
 		$requestParam = ['kind' => 2, 'temp' => 'test.pdf'];
-		$errorMessages = ['username', '「username」は必ず入力してください。'];
+		$errorMessages = ['username', '「username」は必ずご入力ください'];
 		$session->setParam('item_values', $requestParam);
 		$session->setParam('error_messages', $errorMessages);
 		
@@ -1109,7 +1109,7 @@ EOT;
 		
 		$main->invokeArgs($mailform, []);
 		$this->assertEquals(MailForm::ERROR_CODE_INVALID_FORM_CONFIG, $ErrorCode->getValue($mailform));
-		$this->assertEquals('システムエラーが発生しました。', $ErrorMessages->getValue($mailform)['base']);
+		$this->assertEquals('システム設定エラーが発生しました', $ErrorMessages->getValue($mailform)['base']);
 		
 		// 不正アクセス
 		$mailform = $this->createCompatibleMock('MailForm', ['isCorrectAccess', 'unsetSession', 'redirect']);
@@ -1520,7 +1520,7 @@ EOT;
 		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertFalse($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_NO_AGREEMENT, $ErrorCode->getValue($mailform));
-		$this->assertEquals('同意していただく必要があります。', $ErrorMessages->getValue($mailform)['key']);
+		$this->assertEquals('同意していただく必要があります', $ErrorMessages->getValue($mailform)['key']);
 		
 		// stringで、入力が空の時
 		$mailform = new MailForm();
@@ -1529,7 +1529,7 @@ EOT;
 		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertFalse($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_NOT_NULL_PARAM, $ErrorCode->getValue($mailform));
-		$this->assertEquals('「title」は必ず入力してください。', $ErrorMessages->getValue($mailform)['key']);
+		$this->assertEquals('「title」は必ずご入力ください', $ErrorMessages->getValue($mailform)['key']);
 		
 		// selectで、入力が空の時
 		$mailform = new MailForm();
@@ -1538,7 +1538,7 @@ EOT;
 		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertFalse($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_NEED_SELECT_PARAM, $ErrorCode->getValue($mailform));
-		$this->assertEquals('「title」は必ず選択してください。', $ErrorMessages->getValue($mailform)['key']);
+		$this->assertEquals('「title」は必ず選択してください', $ErrorMessages->getValue($mailform)['key']);
 		
 		// multi-selectで、入力が空の時
 		$mailform = new MailForm();
@@ -1547,7 +1547,7 @@ EOT;
 		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertFalse($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_NEED_SELECT_PARAM, $ErrorCode->getValue($mailform));
-		$this->assertEquals('「title」は必ず選択してください。', $ErrorMessages->getValue($mailform)['key']);
+		$this->assertEquals('「title」は必ず選択してください', $ErrorMessages->getValue($mailform)['key']);
 		
 		// 値に数字が入ってきた時
 		$mailform = new MailForm();
@@ -1557,7 +1557,7 @@ EOT;
 		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertFalse($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_INVALID_PARAM, $ErrorCode->getValue($mailform));
-		$this->assertEquals('「title」の値は入力できない値です。', $ErrorMessages->getValue($mailform)['key']);
+		$this->assertEquals('「title」の値は入力できない値です', $ErrorMessages->getValue($mailform)['key']);
 		
 		// convのテスト
 		$mailform = new MailForm();
@@ -1577,7 +1577,7 @@ EOT;
 		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertFalse($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_NOT_SAME_PARAM, $ErrorCode->getValue($mailform));
-		$this->assertEquals('「title」は「same_check_title」と同じ値を入力してください。', $ErrorMessages->getValue($mailform)['key']);
+		$this->assertEquals('「title」が「same_check_title」と同じではありません', $ErrorMessages->getValue($mailform)['key']);
 		
 		// sameで、値が同じ場合
 		$mailform = new MailForm();
@@ -1601,7 +1601,7 @@ EOT;
 		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertFalse($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_UNDER_MINLENGTH, $ErrorCode->getValue($mailform));
-		$this->assertEquals('「title」は、3文字以上でご記入ください。', $ErrorMessages->getValue($mailform)['key']);
+		$this->assertEquals('「title」は3文字以下でご入力ください', $ErrorMessages->getValue($mailform)['key']);
 		
 		// maxlengthのチェック、maxlengthと同じ長さ
 		$mailform = new MailForm();
@@ -1617,7 +1617,7 @@ EOT;
 		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertFalse($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_OVER_MAXLENGTH, $ErrorCode->getValue($mailform));
-		$this->assertEquals('「title」は、3文字以内でご記入ください。', $ErrorMessages->getValue($mailform)['key']);
+		$this->assertEquals('「title」は3文字以上でご入力ください', $ErrorMessages->getValue($mailform)['key']);
 		
 		// value=selectで、selectvaluesがない場合
 		$mailform = new MailForm();
@@ -1629,7 +1629,7 @@ EOT;
 		$this->assertFalse($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertTrue($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_INVALID_FORM_CONFIG, $ErrorCode->getValue($mailform));
-		$this->assertEquals('システムエラーが発生しました。', $ErrorMessages->getValue($mailform)['base']);
+		$this->assertEquals('システム設定エラーが発生しました', $ErrorMessages->getValue($mailform)['base']);
 		
 		// value=selectで、入力が不正な値だった場合
 		$mailform = new MailForm();
@@ -1640,7 +1640,7 @@ EOT;
 		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertFalse($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_INVALID_SELECT_PARAM, $ErrorCode->getValue($mailform));
-		$this->assertEquals('「title」に不正な値が入力されています。', $ErrorMessages->getValue($mailform)['key']);
+		$this->assertEquals('「title」に不正な値が入力されています', $ErrorMessages->getValue($mailform)['key']);
 		
 		// value=selectで、入力が正常だった場合
 		$mailform = new MailForm();
@@ -1661,7 +1661,7 @@ EOT;
 		$this->assertFalse($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertTrue($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_INVALID_FORM_CONFIG, $ErrorCode->getValue($mailform));
-		$this->assertEquals('システムエラーが発生しました。', $ErrorMessages->getValue($mailform)['base']);
+		$this->assertEquals('システム設定エラーが発生しました', $ErrorMessages->getValue($mailform)['base']);
 		
 		// value=multi-selectで、入力が不正な値だった場合
 		$mailform = new MailForm();
@@ -1672,7 +1672,7 @@ EOT;
 		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertFalse($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_INVALID_SELECT_PARAM, $ErrorCode->getValue($mailform));
-		$this->assertEquals('「title」に不正な値が入力されています。', $ErrorMessages->getValue($mailform)['key']);
+		$this->assertEquals('「title」に不正な値が入力されています', $ErrorMessages->getValue($mailform)['key']);
 		
 		// value=multi-selectで、入力が不正な値だった場合
 		$mailform = new MailForm();
@@ -1683,7 +1683,7 @@ EOT;
 		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertFalse($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_INVALID_SELECT_PARAM, $ErrorCode->getValue($mailform));
-		$this->assertEquals('「title」に不正な値が入力されています。', $ErrorMessages->getValue($mailform)['key']);
+		$this->assertEquals('「title」に不正な値が入力されています', $ErrorMessages->getValue($mailform)['key']);
 		
 		// value=multi-selectで、入力が正常だった場合
 		$mailform = new MailForm();
@@ -1703,7 +1703,7 @@ EOT;
 		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertFalse($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_NOT_KANA_PARAM, $ErrorCode->getValue($mailform));
-		$this->assertEquals('「title」はカタカナで入力してください。', $ErrorMessages->getValue($mailform)['key']);
+		$this->assertEquals('「title」は全角カナでご入力ください', $ErrorMessages->getValue($mailform)['key']);
 		
 		// value=kanaで、入力値がカタカナの場合
 		$mailform = new MailForm();
@@ -1723,7 +1723,7 @@ EOT;
 		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertFalse($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_NOT_YOMI_PARAM, $ErrorCode->getValue($mailform));
-		$this->assertEquals('「title」はひらがなで入力してください。', $ErrorMessages->getValue($mailform)['key']);
+		$this->assertEquals('「title」は全角かなでご入力ください', $ErrorMessages->getValue($mailform)['key']);
 		
 		// value=yomiで、入力値がひらがなの場合
 		$mailform = new MailForm();
@@ -1742,7 +1742,7 @@ EOT;
 		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertFalse($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_NOT_PLUS_PARAM, $ErrorCode->getValue($mailform));
-		$this->assertEquals('「title」は数字で入力してください。', $ErrorMessages->getValue($mailform)['key']);
+		$this->assertEquals('「title」は半角数字でご入力ください', $ErrorMessages->getValue($mailform)['key']);
 		
 		// value=plusで、入力値が数字の場合
 		$mailform = new MailForm();
@@ -1761,7 +1761,7 @@ EOT;
 		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertFalse($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_TEL_PARAM, $ErrorCode->getValue($mailform));
-		$this->assertEquals('「title」は電話番号を入力してください。', $ErrorMessages->getValue($mailform)['key']);
+		$this->assertEquals('「title」は半角数字でご入力ください', $ErrorMessages->getValue($mailform)['key']);
 		
 		// value=telで、入力値が数字の場合
 		$mailform = new MailForm();
@@ -1780,7 +1780,7 @@ EOT;
 		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertFalse($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_NOT_EMAIL_PARAM, $ErrorCode->getValue($mailform));
-		$this->assertEquals('「title」は正しいメールアドレスを入力してください。', $ErrorMessages->getValue($mailform)['key']);
+		$this->assertEquals('「title」のメールアドレスは正しい形式でご入力ください', $ErrorMessages->getValue($mailform)['key']);
 		
 		// value=emailで、入力値が数字の場合
 		$mailform = new MailForm();
@@ -1799,7 +1799,7 @@ EOT;
 		$this->assertFalse($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertTrue($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_INVALID_FORM_CONFIG, $ErrorCode->getValue($mailform));
-		$this->assertEquals('システムエラーが発生しました。', $ErrorMessages->getValue($mailform)['base']);
+		$this->assertEquals('システム設定エラーが発生しました', $ErrorMessages->getValue($mailform)['base']);
 		
 		// value=agreementで、入力値がequalの値と違う場合
 		$mailform = new MailForm();
@@ -1810,7 +1810,7 @@ EOT;
 		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertFalse($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_NO_AGREEMENT, $ErrorCode->getValue($mailform));
-		$this->assertEquals('同意していただく必要があります。', $ErrorMessages->getValue($mailform)['key']);
+		$this->assertEquals('同意していただく必要があります', $ErrorMessages->getValue($mailform)['key']);
 		
 		// value=agreementで、入力値がequalの値と同じ場合
 		$mailform = new MailForm();
@@ -1828,7 +1828,7 @@ EOT;
 		$values = ['value' => 'file', 'empty' => false, 'title'=> 'title'];
 		$this->assertFalse($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertEquals(MailForm::ERROR_CODE_TEMP_FILE, $ErrorCode->getValue($mailform));
-		$this->assertEquals('システムエラーが発生しました。', $ErrorMessages->getValue($mailform)['key']);
+		$this->assertEquals('ファイルシステムエラーが発生しました', $ErrorMessages->getValue($mailform)['key']);
 		
 		// value=fileで、Mimeを指定しない場合
 		$mailform = new MailForm();
@@ -1858,7 +1858,7 @@ EOT;
 		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertFalse($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_UNKNOWN_FILE_FORMAT, $ErrorCode->getValue($mailform));
-		$this->assertEquals('アップロードファイル「test.txt」のファイル形式には対応してません。', $ErrorMessages->getValue($mailform)['key']);
+		$this->assertEquals('アップロードファイル「test.txt」のファイル形式には対応してません', $ErrorMessages->getValue($mailform)['key']);
 		
 		system("rm -rf {$mailform->TmpDirectoryPath}");
 	}
@@ -1925,7 +1925,7 @@ EOT;
 		$this->assertEquals('UCS-2LE', $Encoding->getValue($simpleMailer));
 		
 		$this->assertEquals(MailForm::ERROR_CODE_NOSET_TO, $ErrorCode->getValue($mailform));
-		$this->assertEquals('システムエラーが発生しました。', $ErrorMessages->getValue($mailform)['base']);
+		$this->assertEquals('システムエラーが発生しました', $ErrorMessages->getValue($mailform)['base']);
 		
 		$simpleMailer = $this->createCompatibleMock('SimpleMailer', ['send']);
 		$expectation = $simpleMailer->expects($this->once())
@@ -1943,7 +1943,7 @@ EOT;
 		$mailform->DefaultEmailAddress = 'default@example.com';
 		$this->assertFalse($sendMailByIndex->invokeArgs($mailform, ['1']));
 		$this->assertEquals(MailForm::ERROR_CODE_CANNOT_SEND, $ErrorCode->getValue($mailform));
-		$this->assertEquals('メールを送ることができませんでした。', $ErrorMessages->getValue($mailform)['base']);
+		$this->assertEquals('メールを送ることができませんでした', $ErrorMessages->getValue($mailform)['base']);
 		$this->assertEquals('default@example.com', $To->getValue($simpleMailer)[0][0]);
 		$this->assertEquals('default@example.com', $From->getValue($simpleMailer)[0]);
 		
