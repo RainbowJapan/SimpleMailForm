@@ -7,8 +7,10 @@ use PhpCsFixer\Finder;
 
 $finder = (new Finder())
 ->in(__DIR__)
-->exclude('external') // 今後は使わないPHPMailerのフォルダは整形の対象外にして隔離する
-;
+->exclude([
+'external',  // 今後は使わないPHPMailerのフォルダは整形の対象外にして隔離する
+'vendor56',  // 他バージョンのベンダーフォルダを除外
+]);
 
 return (new Config())
 ->setRiskyAllowed(false) 
