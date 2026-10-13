@@ -13,12 +13,14 @@ JSON構造の全体像は以下の通りです。
 ```json
 {
   "mailconf": { ... },
+  "request-guard": [ ... ],
   "items": { ... }
 }
 
 ```
 
 * **`mailconf`**: メールの送信先・件名・テンプレートなどのメール送信設定
+* **`request-guard`**: reCAPTCHA v3 などのリクエスト検証・スパム防御設定
 * **`items`**: 各フォーム項目の入力タイプ、バリデーション、自動変換などの設定
 
 ---
@@ -58,7 +60,35 @@ JSON構造の全体像は以下の通りです。
 
 ---
 
-## 2. フォーム項目設定 (`items`)
+## 2. スパム・リクエスト検証設定 (`request-guard`)
+
+bot 等によるスパム投稿を防ぐための検証ガード（reCAPTCHA v3 等）を設定します。配列形式で複数のガードを指定できます。
+
+```json
+{
+  "request-guard": [
+    {
+      "type": "recaptcha",
+      "secret_key": "YOUR_SECRET_KEY",
+      "site_key": "YOUR_SITE_KEY",
+      "score_threshold": 0.5
+    }
+  ]
+}
+```
+
+### パラメータ一覧 (`request-guard`)
+
+| キー | 型 | 必須 | 説明 |
+| --- | --- | --- | --- |
+| `type` | string | ○ | 検証タイプ。reCAPTCHA v3 の場合は `"recaptcha"` を指定します。 |
+| `secret_key` | string | ○ | Google reCAPTCHA v3 のシークレットキー。 |
+| `site_key` | string | ○ | Google reCAPTCHA v3 のサイトキー。 |
+| `score_threshold` | float | - | reCAPTCHA v3 の判定スコア閾値（`0.0` 〜 `1.0`）。省略時や `0` 指定時はデフォルト（`0.5`）が適用されます。指定した閾値未満のアクセスを bot と判定してエラーにします。 |
+
+---
+
+## 3. フォーム項目設定 (`items`)
 
 フォームの各入力フィールドの挙動・検証ルールを定義します。キー名（下記例の `name`, `email` 等）が HTML の `name` 属性およびメールテンプレートの `{{{key}}}` 置換タグと連動します。
 
@@ -94,7 +124,7 @@ JSON構造の全体像は以下の通りです。
 
 ---
 
-## 3. 入力値の自動変換 (`conv`)
+## 4. 入力値の自動変換 (`conv`)
 
 `conv` パラメータを指定すると、**バリデーション処理が実行される前に**入力値が自動的に変換（サニタイズ・整形）されます。
 
@@ -106,7 +136,7 @@ JSON構造の全体像は以下の通りです。
 
 ---
 
-## 4. `value` によるバリデーション種別
+## 5. `value` によるバリデーション種別
 
 `value` に指定する値によって、適用される判定ロジックが決まります。
 
@@ -125,7 +155,7 @@ JSON構造の全体像は以下の通りです。
 
 ---
 
-## 5. 設定用 JSON サンプル
+## 6. 設定用 JSON サンプル
 
 一般的なお問い合わせフォームで利用される設定のフルサンプルです。
 
@@ -146,6 +176,14 @@ JSON構造の全体像は以下の通りです。
       "body-template-path": "templates_mail_user.txt"
     }
   },
+  "request-guard": [
+    {
+      "type": "recaptcha",
+      "secret_key": "YOUR_SECRET_KEY",
+      "site_key": "YOUR_SITE_KEY",
+      "score_threshold": 0.5
+    }
+  ],
   "items": {
     "name": {
       "title": "お名前",
@@ -214,7 +252,9 @@ JSON構造の全体像は以下の通りです。
 }
 ```
 
-## 6. メソッドによるメール設定の直接指定（PHPコードによる設定）
+---
+
+## 7. メソッドによるメール設定の直接指定（PHPコードによる設定）
 
 JSONファイル (`mailconf`) を使わずに、PHPのメソッドを直接呼び出してメール送信設定を行うことや、JSONの設定を動的に上書きすることが可能です。
 
@@ -263,5 +303,7 @@ $mailform->setMailBodyTemplateByIndex(1, "{{{name}}} 様\n\nお問い合わせ�
 | `setMailSubjectTemplate($text)` | メール件名テンプレートを設定します |
 | `setMailBodyTemplate($text)` | メール本文テンプレートを設定します |
 | `setAllowTempFiles($flag)` | 添付ファイルの送信許可フラグ（`true`/`false`）を設定します |
+| `getRequestGuard()` | 設定されている RequestGuard オブジェクトを取得します |
+| `setRequestGuard($obj)` | RequestGuard オブジェクトを直接設定・上書きします |
 
-※上記すべてのメソッドに対して、第1引数にインデックス（`$index`）を指定できる `〇〇ByIndex()` メソッドが用意されています。
+※メール関連の各種メソッドに対して、第1引数にインデックス（`$index`）を指定できる `〇〇ByIndex()` メソッドが用意されています。

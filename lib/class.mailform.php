@@ -6,6 +6,8 @@ require_once __DIR__ . '/class.inner_session.php';
 require_once __DIR__ . '/interface.session.php';
 require_once __DIR__ . '/common.php';
 require_once __DIR__ . '/display_common.php';
+require_once __DIR__ . '/class.request_guard.php';
+require_once __DIR__ . '/class.recaptcha_checker.php';
 
 /**
  * メールフォームを管理する。
@@ -53,6 +55,10 @@ class MailForm
 	const ERROR_CODE_NOT_YOMI_PARAM = 43;      // 全角ひらがなでない場合
 	const ERROR_CODE_UNDER_MINLENGTH = 44;     // 文字列が最小長より短い場合
 
+	const ERROR_CODE_NO_CONNECT_RECAPTCHA = 101;// reCAPTCHAのAPIエラー
+	const ERROR_CODE_DUPLICATE_RECAPTCHA = 102; // reCAPTCHAで２重リクエストした場合
+	const ERROR_CODE_RECAPTCHA = 103;           // reCAPTCHAでロボットと判断された場合
+
 	public $CharSet = 'utf8';                  // メールの文字コード
 	public $MailEncoding = '7bit';             // メールのエンコード
 	public $FromEncoding = 'utf8';             // フォームのエンコード
@@ -66,14 +72,16 @@ class MailForm
 	public $MultiSelectedDelimiter = '／';     // 複数選択可能の項目を表示する時に使用するデリミタ
 
 	const DEF_MAIL_CONFIG_KEY = 0;             // MailConfigsのデフォルトキー
-	protected $MailConfigs = [];          // MailConfigの配列
+	protected $MailConfigs = [];               // MailConfigの配列
 
 	protected $ErrorCode = 0;                  // エラーコード
-	protected $ErrorMessages = [];        // エラーメッセージ配列
+	protected $ErrorMessages = [];             // エラーメッセージ配列
 
 	protected $FormConfig = null;              // フォームの設定
 	protected $RequestParam = null;            // ユーザが送信したフォームデータ(ユーザ送信データ)
 	protected $Status = null;                  // ステータス
+	
+	protected $RequestGuard = null;            // RequestGuardオブジェクト
 
 	// テンプレートの読み込みをクラス内でできない場合は、IncludeTemplateURLをfalseにして、
 	// executeを呼び出した後、
@@ -108,6 +116,9 @@ class MailForm
 	self::ERROR_CODE_UNDER_MINLENGTH => '「%s」は%s文字以下でご入力ください',
 	self::ERROR_CODE_OVER_MAXLENGTH => '「%s」は%s文字以上でご入力ください',
 	self::ERROR_CODE_NOT_YOMI_PARAM => '「%s」は全角かなでご入力ください',
+	self::ERROR_CODE_NO_CONNECT_RECAPTCHA => 'システムエラーが発生しております。しばらく時間をおいてから再度アクセスしてください',
+	self::ERROR_CODE_DUPLICATE_RECAPTCHA => 'リロードなど、２重でアクセスされました。もう一度、最初からご入力ください',
+	self::ERROR_CODE_RECAPTCHA => 'Google の reCAPTCHA による判定の結果、bot による登録の疑いが強いため、登録できません。ブラウザやデバイスなどのアクセス環境を変えてご利用ください',
 	];
 
 	/**
@@ -786,9 +797,62 @@ class MailForm
 				}
 			}
 		}
+		
+		if (isset($this->FormConfig['request-guard'])) {
+			$this->RequestGuard = $this->createRequestGuard($this->FormConfig['request-guard']);
+		}
 		return true;
 	}
 
+	/**
+	 * 設定情報に基づいてRequestGuardインスタンスを生成・初期化する。
+	 *
+	 * @param array $config 設定配列
+	 * @return RequestGuard 初期化済みのリクエストガードオブジェクト
+	 * @throws InvalidArgumentException 未知のタイプ、または必要なキーがない場合
+	 */
+	protected function createRequestGuard($config)
+	{
+		$requestGuard = new RequestGuard();
+		
+		foreach ($config as $value) {
+			$type = isset($value['type']) ? $value['type'] : '';
+			switch ($type) {
+				case 'recaptcha':
+					if (empty($value['secret_key']) || empty($value['site_key'])) {
+						throw new InvalidArgumentException("Missing or empty required keys ('secret_key' or 'site_key') for recaptcha.");
+					}
+					$scoreThreshold = empty($value['score_threshold']) ? null : $value['score_threshold'];
+					$requestGuard->addChecker($type, new ReCaptchaChecker($value['secret_key'], $value['site_key'], $scoreThreshold));
+					break;
+				default:
+					throw new InvalidArgumentException("Unknown checker type: {$type}");
+			}
+		}
+		return $requestGuard;
+	}
+	
+	/**
+	 * RequestGuardオブジェクトを取得する。
+	 *
+	 * @return RequestGuard|null RequestGuardオブジェクト（未設定時はnull）
+	 */
+	public function getRequestGuard()
+	{
+		return $this->RequestGuard;
+	}
+	
+	/**
+	 * RequestGuardオブジェクトを設定する。
+	 *
+	 * @param RequestGuard|null $obj RequestGuardオブジェクト
+	 * @return void
+	 */
+	public function setRequestGuard($obj)
+	{
+		$this->RequestGuard = $obj;
+	}
+	
 	/**
 	 * 設定ファイルのメールアドレスの設定をパースする。
 	 *
@@ -968,6 +1032,7 @@ class MailForm
 		}
 
 		$this->getSession()->setParam('item_values', $this->RequestParam);
+		$this->getSession()->setParam('error_code', $this->ErrorCode);
 		$this->getSession()->setParam('error_messages', $this->ErrorMessages);
 	}
 
@@ -979,6 +1044,10 @@ class MailForm
 	{
 		if ($this->getSession()->isSetParam('item_values')) {
 			$this->RequestParam = $this->getSession()->getParamValue('item_values');
+		}
+		if ($this->getSession()->isSetParam('error_code')) {
+			$errorCode = $this->getSession()->getParamValue('error_code');
+			$this->ErrorCode = is_numeric($errorCode) ? (int)$errorCode : 0;
 		}
 		if ($this->getSession()->isSetParam('error_messages')) {
 			$this->ErrorMessages = $this->getSession()->getParamValue('error_messages');
@@ -1063,6 +1132,8 @@ class MailForm
 		}
 		$this->getSession()->unsetParam('item_values');
 		$this->getSession()->unsetParam('mailform_temp_dir_path');
+		$this->getSession()->unsetParam('error_code');
+		$this->getSession()->unsetParam('error_messages');
 	}
 
 	/**
@@ -1077,25 +1148,68 @@ class MailForm
 	}
 
 	/**
+	* リクエストURLが指定されたURL（パスおよび必須パラメータ）に一致するか判定する。
+	*
+	* @param string $requestUri リクエストURI ($_SERVER['REQUEST_URI'])
+	* @param string $targetUrl  設定されたURL (例: 'index.php', 'index.php?type=error')
+	* @return bool
+	*/
+	protected function isMatchUrlPath($requestUri, $targetUrl)
+	{
+		$targetParts = parse_url($targetUrl);
+		$requestParts = parse_url($requestUri);
+		
+		if ($targetParts === false || $requestParts === false) {
+			return false;
+		}
+		
+		$targetPath = isset($targetParts['path']) ? ltrim($targetParts['path'], '/') : '';
+		$requestPath = isset($requestParts['path']) ? ltrim($requestParts['path'], '/') : '';
+		
+		if ($targetPath !==$requestPath) {
+			return false;
+		}
+		
+		// クエリパラメータの判定
+		// 設定側にパラメータが定義されている場合、リクエスト側にそれらが「すべて含まれているか」を確認する
+		if (isset($targetParts['query'])) {
+			if (!isset($requestParts['query'])) {
+				return false;
+			}
+			
+			parse_str($targetParts['query'], $targetParams);
+			parse_str($requestParts['query'], $requestParams);
+			
+			foreach ($targetParams as $key =>$value) {
+				if (!array_key_exists($key, $requestParams) || (string)$requestParams[$key] !== (string)$value) {
+					return false;
+				}
+			}
+		}
+		
+		return true;
+	}
+	
+	/**
 	 * 処理実行する。
 	 *
 	 */
 	public function execute()
 	{
-		$url = isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '';
+		$url = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
 		if ($this->IncludeTemplateURL) {
 			$this->main();
 		} else {
-			if (substr($url, 0, strcspn($url, '?')) === $this->ErrorURL) {
+			if ($this->isMatchUrlPath($url, $this->ErrorURL)) {
 				$this->loadParamFromSession();
 				return;
 			}
-			if ($this->Status !== self::STATUS_COMPLETE && substr($url, 0, strcspn($url, '?')) === $this->CompleteURL) {
+			if ($this->Status !== self::STATUS_COMPLETE && $this->isMatchUrlPath($url, $this->CompleteURL)) {
 				$this->showCompletePage();
 				return;
 			}
 			$this->main();
-			if (substr($url, 0, strcspn($url, '?')) !== $this->getTemplateURL()) {
+			if (!$this->isMatchUrlPath($url, $this->getTemplateURL())) {
 				$this->redirect($this->getTemplateURL());
 				return;
 			}
@@ -1437,6 +1551,10 @@ class MailForm
 	 */
 	protected function checkRequestParams()
 	{
+		if (!$this->checkRequestGuard()) {
+			return false;
+		}
+		
 		$ret = true;
 		$items = $this->FormConfig['items'];
 		foreach ($items as $key => $values) {
@@ -1446,7 +1564,28 @@ class MailForm
 		}
 		return $ret;
 	}
-
+	
+	/**
+	 * ユーザ送信データの中身をチェックする。
+	 *
+	 * @return bool 正常かどうか
+	 */
+	protected function checkRequestGuard()
+	{
+		if ($this->RequestGuard === null) {
+			return true;
+		}
+		
+		$errorCodes = $this->RequestGuard->validate($_POST);
+		if (count($errorCodes) > 0) {
+			foreach ($errorCodes as $code) {
+				$this->setErrorMessage(self::BASE_ERROR_KEY, $code);
+			}
+			return false;
+		}
+		return true;
+	}
+	
 	/**
 	 * ユーザ送信データの各値をチェックする。
 	 *

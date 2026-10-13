@@ -142,6 +142,22 @@ class MailFormTest extends SimpleMailForm_TestCase
 		$this->assertCount(1, $errorMessages);
 		$this->assertArrayHasKey(MailForm::BASE_ERROR_KEY, $errorMessages);
 		$this->assertEquals('システム設定エラーが発生しました', $errorMessages[MailForm::BASE_ERROR_KEY]);
+
+		// reCAPTCHAエラーメッセージの検証
+		$mailform1 = new MailForm();
+		$mailform1->setErrorMessage(MailForm::BASE_ERROR_KEY, MailForm::ERROR_CODE_NO_CONNECT_RECAPTCHA);
+		$errorMessages1 = $ErrorMessages->getValue($mailform1);
+		$this->assertEquals('システムエラーが発生しております。しばらく時間をおいてから再度アクセスしてください', $errorMessages1[MailForm::BASE_ERROR_KEY]);
+
+		$mailform2 = new MailForm();
+		$mailform2->setErrorMessage(MailForm::BASE_ERROR_KEY, MailForm::ERROR_CODE_DUPLICATE_RECAPTCHA);
+		$errorMessages2 = $ErrorMessages->getValue($mailform2);
+		$this->assertEquals('リロードなど、２重でアクセスされました。もう一度、最初からご入力ください', $errorMessages2[MailForm::BASE_ERROR_KEY]);
+
+		$mailform3 = new MailForm();
+		$mailform3->setErrorMessage(MailForm::BASE_ERROR_KEY, MailForm::ERROR_CODE_RECAPTCHA);
+		$errorMessages3 = $ErrorMessages->getValue($mailform3);
+		$this->assertEquals('Google の reCAPTCHA による判定の結果、bot による登録の疑いが強いため、登録できません。ブラウザやデバイスなどのアクセス環境を変えてご利用ください', $errorMessages3[MailForm::BASE_ERROR_KEY]);
 	}
 	
 	public function testIsCriticalError()
@@ -578,6 +594,54 @@ EOT;
 		$body = $getMailBodyTemplateByIndex->invokeArgs($mailform, ['to-user']);
 		$this->assertEquals('to-user-mail-body-template', $body);
 		$this->assertFalse($getAllowTempFilesByIndex->invokeArgs($mailform, ['to-user']));
+
+		// request-guardを含む設定パースのテスト
+		$textWithGuard = <<<EOT
+  {
+	"request-guard": [
+	  {
+		"type": "recaptcha",
+		"secret_key": "sec_key",
+		"site_key": "site_key",
+		"score_threshold": 0.7
+	  }
+	]
+  }
+EOT;
+		$secretKey = getProperty('ReCaptchaChecker', 'secretKey');
+		$this->assertTrue($mailform->setFormConfig($textWithGuard, "", MailForm::MAILFORM_FILE_TYPE_JSON));
+		$guard = $mailform->getRequestGuard();
+		$this->assertInstanceOf('RequestGuard', $guard);
+		$this->assertEquals(['site_key' => 'site_key'], $guard->getClientConfig('recaptcha'));
+		
+		$checkers = $guard->getRequestCheckers();
+		$this->assertCount(1, $checkers);
+		$checker = $checkers[0];
+		$this->assertInstanceOf(ReCaptchaChecker::class, $checkers[0]);
+		$this->assertEquals(0.7, $checker->getScoreThreshold());
+		$this->assertEquals('sec_key', $secretKey->getValue($checker));
+		
+		// score_thresholdがない場合のテスト
+		$textWithGuard = <<<EOT
+  {
+	"request-guard": [
+	  {
+		"type": "recaptcha",
+		"secret_key": "sec_key",
+		"site_key": "site_key"
+	  }
+	]
+  }
+EOT;
+		$this->assertTrue($mailform->setFormConfig($textWithGuard, "", MailForm::MAILFORM_FILE_TYPE_JSON));
+		$guard = $mailform->getRequestGuard();
+		$this->assertInstanceOf('RequestGuard', $guard);
+		
+		$checkers = $guard->getRequestCheckers();
+		$this->assertCount(1, $checkers);
+		$checker = $checkers[0];
+		$this->assertInstanceOf(ReCaptchaChecker::class, $checkers[0]);
+		$this->assertEquals(0.5, $checker->getScoreThreshold());
 	}
 	
 	public function testLoadFormConfig()
@@ -1003,9 +1067,40 @@ EOT;
 		system("rm -rf {$mailform->TmpDirectoryPath}");
 	}
 	
+	public function testIsMatchUrlPath()
+	{
+		$isMatchUrlPath = getMethod('MailForm', 'isMatchUrlPath');
+		$mailform = new MailForm();
+		
+		// 1. パスのみの正常系判定
+		$this->assertTrue($isMatchUrlPath->invokeArgs($mailform, ['index.php', 'index.php']));
+		$this->assertTrue($isMatchUrlPath->invokeArgs($mailform, ['/index.php', 'index.php']));
+		$this->assertTrue($isMatchUrlPath->invokeArgs($mailform, ['/index.php', '/index.php']));
+		
+		// 外部から任意のパラメータ（utm_source等）が付与された場合でも一致と判定
+		$this->assertTrue($isMatchUrlPath->invokeArgs($mailform, ['/index.php?ref=twitter&utm_source=google', 'index.php']));
+		
+		// 2. クエリパラメータ指定ありの正常系判定
+		$this->assertTrue($isMatchUrlPath->invokeArgs($mailform, ['/index.php?type=error', 'index.php?type=error']));
+		// パラメータの順序違い
+		$this->assertTrue($isMatchUrlPath->invokeArgs($mailform, ['/test/index.php?foo=1&type=error', 'test/index.php?type=error']));
+		// 必須パラメータを満たした上で追加パラメータがある場合
+		$this->assertTrue($isMatchUrlPath->invokeArgs($mailform, ['/index.php?type=error&ref=123', 'index.php?type=error']));
+		
+		// 3. セキュリティ・前方一致リスク（旧 strpos の問題点）の検証
+		$this->assertFalse($isMatchUrlPath->invokeArgs($mailform, ['/error.php.attacker.com', 'error.php']));
+		$this->assertFalse($isMatchUrlPath->invokeArgs($mailform, ['/error.php_dummy', 'error.php']));
+		$this->assertFalse($isMatchUrlPath->invokeArgs($mailform, ['/other.php', 'index.php']));
+		
+		// 4. パラメータの不足・不一致
+		$this->assertFalse($isMatchUrlPath->invokeArgs($mailform, ['/index.php', 'index.php?type=error']));
+		$this->assertFalse($isMatchUrlPath->invokeArgs($mailform, ['/index.php?type=input', 'index.php?type=error']));
+		$this->assertFalse($isMatchUrlPath->invokeArgs($mailform, ['/index.php?other=error', 'index.php?type=error']));
+	}
+	
 	public function testExecute()
 	{
-		$_SERVER['SCRIPT_NAME'] = 'SCRIPT_NAME';
+		$_SERVER['REQUEST_URI'] = '/REQUEST_URI/index.php';
 		$ErrorCode = getProperty('MailForm', 'ErrorCode');
 		$ErrorMessages = getProperty('MailForm', 'ErrorMessages');
 		$RequestParam = getProperty('MailForm', 'RequestParam');
@@ -1030,7 +1125,7 @@ EOT;
 		->method('main');
 		
 		$mailform->IncludeTemplateURL = false;
-		$mailform->ErrorURL = $_SERVER['SCRIPT_NAME'];
+		$mailform->ErrorURL = $_SERVER['REQUEST_URI'];
 		$mailform->execute();
 		
 		// IncludeTemplateURL=false
@@ -1043,7 +1138,7 @@ EOT;
 		->method('main');
 		
 		$mailform->IncludeTemplateURL = false;
-		$mailform->CompleteURL = $_SERVER['SCRIPT_NAME'];
+		$mailform->CompleteURL = $_SERVER['REQUEST_URI'];
 		$Status->setValue($mailform, MailForm::STATUS_COMPLETED);
 		$mailform->execute();
 		
@@ -1056,7 +1151,7 @@ EOT;
 		->method('main');
 		
 		$mailform->IncludeTemplateURL = false;
-		$mailform->CompleteURL = $_SERVER['SCRIPT_NAME'];
+		$mailform->CompleteURL = $_SERVER['REQUEST_URI'];
 		$Status->setValue($mailform, MailForm::STATUS_COMPLETED);
 		$mailform->execute();
 		
@@ -1085,7 +1180,7 @@ EOT;
 		->method('main');
 		$expectatio = $mailform->expects($this->once())
 		->method('getTemplateURL');
-		$this->setCompatibleReturnValue($expectation, $_SERVER['SCRIPT_NAME']);
+		$this->setCompatibleReturnValue($expectation, $_SERVER['REQUEST_URI']);
 		$mailform->expects($this->never())
 		->method('redirect');
 		$Status->setValue($mailform, MailForm::STATUS_COMPLETED);
@@ -1094,7 +1189,7 @@ EOT;
 		
 	public function testMain()
 	{
-		$_SERVER['REQUEST_URI'] = 'REQUEST_URI';
+		$_SERVER['REQUEST_URI'] = '/REQUEST_URI/index.php';
 		$ErrorCode = getProperty('MailForm', 'ErrorCode');
 		$ErrorMessages = getProperty('MailForm', 'ErrorMessages');
 		$main = getMethod('MailForm', 'main');
@@ -2116,5 +2211,74 @@ EOT;
 		$this->assertEquals('aaa_1', $array[0]);
 		$this->assertEquals('aaa_2', $array[1]);
 		
+	}
+
+	public function testCreateRequestGuard()
+	{
+		$createRequestGuard = getMethod('MailForm', 'createRequestGuard');
+		$mailform = new MailForm();
+
+		$config = [
+			[
+				'type' => 'recaptcha',
+				'secret_key' => 'secret_val',
+				'site_key' => 'site_val'
+			]
+		];
+
+		$guard = $createRequestGuard->invokeArgs($mailform, [$config]);
+		$this->assertInstanceOf('RequestGuard', $guard);
+		$this->assertEquals(['site_key' => 'site_val'], $guard->getClientConfig('recaptcha'));
+	}
+
+	public function testCreateRequestGuardUnknownType()
+	{
+		$createRequestGuard = getMethod('MailForm', 'createRequestGuard');
+		$mailform = new MailForm();
+
+		$config = [
+			[
+				'type' => 'unknown_type'
+			]
+		];
+
+		if (method_exists($this, 'expectException')) {
+			$this->expectException('InvalidArgumentException');
+		} else {
+			$this->setExpectedException('InvalidArgumentException');
+		}
+		$createRequestGuard->invokeArgs($mailform, [$config]);
+	}
+
+	public function testCheckRequestGuard()
+	{
+		$checkRequestGuard = getMethod('MailForm', 'checkRequestGuard');
+		$RequestGuardProperty = getProperty('MailForm', 'RequestGuard');
+
+		$mailform = new MailForm();
+
+		// RequestGuardがnullの場合はtrueを返す
+		$this->assertTrue($checkRequestGuard->invokeArgs($mailform, []));
+
+		// Mock RequestGuard
+		$guardMock = $this->createCompatibleMock('RequestGuard', ['validate']);
+		$expectation = $guardMock->expects($this->once())
+			->method('validate');
+		$this->setCompatibleReturnValue($expectation, [MailForm::ERROR_CODE_RECAPTCHA]);
+
+		$RequestGuardProperty->setValue($mailform, $guardMock);
+
+		$this->assertFalse($checkRequestGuard->invokeArgs($mailform, []));
+		$this->assertTrue($mailform->isError());
+	}
+
+	public function testGetAndSetRequestGuard()
+	{
+		$mailform = new MailForm();
+		$this->assertNull($mailform->getRequestGuard());
+
+		$guard = new RequestGuard();
+		$mailform->setRequestGuard($guard);
+		$this->assertEquals($guard, $mailform->getRequestGuard());
 	}
 }

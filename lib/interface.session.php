@@ -2,7 +2,7 @@
 /**
  * SessionInterface
  *
- * セッション管理クラスのインタフェース
+ * セッション管理クラスのインタフェース。
  */
 interface SessionInterface
 {
@@ -59,7 +59,7 @@ interface SessionInterface
 /**
  * SessionFactoryInterface
  *
- * Sessionクラスを作成するファクトリーインタフェース
+ * Sessionクラスを作成するファクトリーインタフェース。
  */
 interface SessionFactoryInterface
 {
