@@ -7,6 +7,11 @@ class InnerSessionFactory implements SessionFactoryInterface
 {
 	private static $Instance = null; // インスタンス
 	
+	/**
+	 * インスタンスを取得する
+	 *
+	 * @return SessionInterface
+	 */
 	public function getInstance()
 	{
 		if (self::$Instance === null) {
@@ -35,9 +40,14 @@ class InnerSession implements SessionInterface
 	public function startSession()
 	{
 		if (!$this->isStartSession()) {
-			session_cache_expire(0);
-			session_cache_limiter('private_no_expire');
-			session_start();
+			if (session_status() !== PHP_SESSION_ACTIVE) {
+				session_cache_expire(0);
+				session_cache_limiter('private_no_expire');
+				@session_start();
+			}
+		}
+		if (!isset($_SESSION) || $_SESSION === null) {
+			$_SESSION = [];
 		}
 	}
 
@@ -49,7 +59,17 @@ class InnerSession implements SessionInterface
 		if ($this->isStartSession()) {
 			$_SESSION = [];
 			if (isset($_COOKIE[session_name()])) {
-				setcookie(session_name(), '', time() - 42000, '/');
+				// クッキー設定値を accurately 取得して安全に削除
+				$params = session_get_cookie_params();
+				@setcookie(
+					session_name(),
+					'',
+					time() - 42000,
+					$params['path'],
+					$params['domain'],
+					$params['secure'],
+					$params['httponly']
+				);
 			}
 			session_destroy();
 		}
@@ -62,7 +82,7 @@ class InnerSession implements SessionInterface
 	 */
 	public function isStartSession()
 	{
-		return isset($_SESSION);
+		return session_status() === PHP_SESSION_ACTIVE && isset($_SESSION) && $_SESSION !== null;
 	}
 
 	/**

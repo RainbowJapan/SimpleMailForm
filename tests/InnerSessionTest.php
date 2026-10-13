@@ -3,13 +3,26 @@ require_once(dirname(__FILE__).'/../lib/class.inner_session.php');
 
 class InnerSessionTest extends SimpleMailForm_TestCase
 {
+	/** @var InnerSession */
+	protected $session;
+	
 	protected function setUpCompat()
 	{
-		if (!isset($_SESSION)) {
-			$_SESSION=[  ];
+		parent::setUpCompat();
+		if (!isset($_SESSION) || $_SESSION === null) {
+			$_SESSION = [];
 		}
+		
+		$factory = new InnerSessionFactory();
+		$this->session = $factory->getInstance();
 	}
-  
+
+	protected function tearDownCompat()
+	{
+		$_SESSION = [];
+		parent::tearDownCompat();
+	}
+
 	public function testInnerSessionFactory_getInstance()
 	{
 		$factory = new InnerSessionFactory();
@@ -21,69 +34,61 @@ class InnerSessionTest extends SimpleMailForm_TestCase
 
 	public function testStartSession()
 	{
-		$session = new InnerSession();
 		$_SESSION = null;
-		$this->assertFalse($session->isStartSession());
-		@$session->startSession();
-		$this->assertTrue($session->isStartSession());
+		$this->assertFalse($this->session->isStartSession());
+		$this->session->startSession();
+		$this->assertTrue($this->session->isStartSession());
 	}
 
 	public function testDestroySession()
 	{
-		$session = new InnerSession();
+		$this->session->startSession();
 		$_SESSION = ['foo' => 'bar'];
-		$this->assertTrue($session->isStartSession());
-		@$session->destroySession();
+		$this->assertTrue($this->session->isStartSession());
+		$this->session->destroySession();
 		$this->assertEquals([], $_SESSION);
 	}
-  
+
 	public function testIsStartSession()
 	{
-		$factory = new InnerSessionFactory();
-		$session = $factory->getInstance();
-		$this->assertEquals($session->isStartSession(), true);
+		$this->session->startSession();
+		$this->assertTrue($this->session->isStartSession());
 		$_SESSION = null;
-		$this->assertEquals($session->isStartSession(), false);
-		$_SESSION=[  ];
-	}
-  
-	public function testIsSetParam()
-	{
-		$factory = new InnerSessionFactory();
-		$session = $factory->getInstance();
-		$this->assertEquals($session->isSetParam('test'), false);
-		$_SESSION['test'] = 1;
-		$this->assertEquals($session->isSetParam('test'), true);
-	}
-  
-	public function testUnnsetParam()
-	{
-		$factory = new InnerSessionFactory();
-		$session = $factory->getInstance();
-		$session->unsetParam('none');
-		$_SESSION['test'] = 1;
-		$session->unsetParam('test');
-		$this->assertEquals(isset($_SESSION['test']), false);
-	}
-  
-	public function testSetParam()
-	{
-		$factory = new InnerSessionFactory();
-		$session = $factory->getInstance();
-		$session->setParam('test', 'setParam');
-		$this->assertEquals(isset($_SESSION['test']), true);
-		$this->assertEquals($_SESSION['test'], 'setParam');
-	}
-  
-	public function testGetParamValue()
-	{
-		$factory = new InnerSessionFactory();
-		$session = $factory->getInstance();
-		$_SESSION['test'] = 'getParamValue';
-		$this->assertEquals($session->getParamValue('test'), 'getParamValue');
-		$this->assertEquals($session->getParamValue('none'), null);
-		$_SESSION = null;
-		$this->assertEquals($session->getParamValue('none'), null);
+		$this->assertFalse($this->session->isStartSession());
 	}
 
+	public function testIsSetParam()
+	{
+		$this->session->startSession();
+		$this->assertFalse($this->session->isSetParam('test'));
+		$_SESSION['test'] = 1;
+		$this->assertTrue($this->session->isSetParam('test'));
+	}
+
+	public function testUnsetParam()
+	{
+		$this->session->startSession();
+		$this->session->unsetParam('none');
+		$_SESSION['test'] = 1;
+		$this->session->unsetParam('test');
+		$this->assertFalse(isset($_SESSION['test']));
+	}
+
+	public function testSetParam()
+	{
+		$this->session->startSession();
+		$this->session->setParam('test', 'setParam');
+		$this->assertTrue(isset($_SESSION['test']));
+		$this->assertEquals('setParam', $_SESSION['test']);
+	}
+
+	public function testGetParamValue()
+	{
+		$this->session->startSession();
+		$_SESSION['test'] = 'getParamValue';
+		$this->assertEquals('getParamValue', $this->session->getParamValue('test'));
+		$this->assertNull($this->session->getParamValue('none'));
+		$_SESSION = null;
+		$this->assertNull($this->session->getParamValue('none'));
+	}
 }
