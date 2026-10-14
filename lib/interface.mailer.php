@@ -15,6 +15,13 @@ interface MailerInterface
 	public function setFromEncoding($value);
 
 	/**
+	 * 本文の転送エンコードを設定する。
+	 *
+	 * @param string $value エンコード
+	 */
+	public function setEncode($value);
+
+	/**
 	 * 差出人を設定する。
 	 *
 	 * @param string $address メールアドレス

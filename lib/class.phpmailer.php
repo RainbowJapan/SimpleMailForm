@@ -31,6 +31,7 @@ class EncodePHPMailer extends PHPMailer implements MailerInterface
 		parent::__construct($exceptions);
 		$this->FromEncoding = mb_internal_encoding();
 		$this->ToEncoding = mb_internal_encoding();
+		$this->Encoding = '7bit';
 	}
 
 	/**
@@ -51,6 +52,9 @@ class EncodePHPMailer extends PHPMailer implements MailerInterface
 	 */
 	public function setEncode($value)
 	{
+		if (!$value) { // 互換性担保のため
+			return;
+		}
 		$this->Encoding = $value;
 	}
 	

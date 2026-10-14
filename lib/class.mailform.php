@@ -60,7 +60,7 @@ class MailForm
 	const ERROR_CODE_RECAPTCHA = 103;           // reCAPTCHAでロボットと判断された場合
 
 	public $CharSet = 'utf8';                  // メールの文字コード
-	public $MailEncoding = '7bit';             // メールのエンコード
+	public $MailEncoding = '';                 // メールのエンコード
 	public $FromEncoding = 'utf8';             // フォームのエンコード
 
 	public $InputURL = 'input.php';            // 入力画面テンプレートのURL
@@ -80,7 +80,7 @@ class MailForm
 	protected $FormConfig = null;              // フォームの設定
 	protected $RequestParam = null;            // ユーザが送信したフォームデータ(ユーザ送信データ)
 	protected $Status = null;                  // ステータス
-	
+
 	protected $RequestGuard = null;            // RequestGuardオブジェクト
 
 	// テンプレートの読み込みをクラス内でできない場合は、IncludeTemplateURLをfalseにして、
@@ -797,7 +797,7 @@ class MailForm
 				}
 			}
 		}
-		
+
 		if (isset($this->FormConfig['request-guard'])) {
 			$this->RequestGuard = $this->createRequestGuard($this->FormConfig['request-guard']);
 		}
@@ -814,7 +814,7 @@ class MailForm
 	protected function createRequestGuard($config)
 	{
 		$requestGuard = new RequestGuard();
-		
+
 		foreach ($config as $value) {
 			$type = isset($value['type']) ? $value['type'] : '';
 			switch ($type) {
@@ -831,7 +831,7 @@ class MailForm
 		}
 		return $requestGuard;
 	}
-	
+
 	/**
 	 * RequestGuardオブジェクトを取得する。
 	 *
@@ -841,7 +841,7 @@ class MailForm
 	{
 		return $this->RequestGuard;
 	}
-	
+
 	/**
 	 * RequestGuardオブジェクトを設定する。
 	 *
@@ -852,7 +852,7 @@ class MailForm
 	{
 		$this->RequestGuard = $obj;
 	}
-	
+
 	/**
 	 * 設定ファイルのメールアドレスの設定をパースする。
 	 *
@@ -1158,38 +1158,38 @@ class MailForm
 	{
 		$targetParts = parse_url($targetUrl);
 		$requestParts = parse_url($requestUri);
-		
+
 		if ($targetParts === false || $requestParts === false) {
 			return false;
 		}
-		
+
 		$targetPath = isset($targetParts['path']) ? ltrim($targetParts['path'], '/') : '';
 		$requestPath = isset($requestParts['path']) ? ltrim($requestParts['path'], '/') : '';
-		
+
 		if ($targetPath !==$requestPath) {
 			return false;
 		}
-		
+
 		// クエリパラメータの判定
 		// 設定側にパラメータが定義されている場合、リクエスト側にそれらが「すべて含まれているか」を確認する
 		if (isset($targetParts['query'])) {
 			if (!isset($requestParts['query'])) {
 				return false;
 			}
-			
+
 			parse_str($targetParts['query'], $targetParams);
 			parse_str($requestParts['query'], $requestParams);
-			
+
 			foreach ($targetParams as $key =>$value) {
 				if (!array_key_exists($key, $requestParams) || (string)$requestParams[$key] !== (string)$value) {
 					return false;
 				}
 			}
 		}
-		
+
 		return true;
 	}
-	
+
 	/**
 	 * 処理実行する。
 	 *
@@ -1554,7 +1554,7 @@ class MailForm
 		if (!$this->checkRequestGuard()) {
 			return false;
 		}
-		
+
 		$ret = true;
 		$items = $this->FormConfig['items'];
 		foreach ($items as $key => $values) {
@@ -1564,7 +1564,7 @@ class MailForm
 		}
 		return $ret;
 	}
-	
+
 	/**
 	 * ユーザ送信データの中身をチェックする。
 	 *
@@ -1575,7 +1575,7 @@ class MailForm
 		if ($this->RequestGuard === null) {
 			return true;
 		}
-		
+
 		$errorCodes = $this->RequestGuard->validate($_POST);
 		if (count($errorCodes) > 0) {
 			foreach ($errorCodes as $code) {
@@ -1585,7 +1585,7 @@ class MailForm
 		}
 		return true;
 	}
-	
+
 	/**
 	 * ユーザ送信データの各値をチェックする。
 	 *
@@ -1645,7 +1645,7 @@ class MailForm
 				return true;
 			}
 		}
-		
+
 		if (isset($config['maxlength'])) {
 			if (mb_strlen($inputValue) > $config['maxlength']) {
 				$this->setErrorMessage($key, self::ERROR_CODE_OVER_MAXLENGTH, $config['title'], $config['maxlength']);
@@ -1808,7 +1808,7 @@ class MailForm
 				$mail->setReturnPath($address, $name);
 			}
 		}
-		
+
 		$replyto = $this->getReplyToArrayByIndex($index);
 		if (count($replyto) > 0) {
 			foreach ($replyto as $address => $name) {
