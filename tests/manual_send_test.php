@@ -15,8 +15,8 @@
  * 6. 差出人名（From）および宛先名（To）の日本語表示
  *
  * 【実行方法】
- * CLI: php examples/send_test.php
- * Web: ブラウザで examples/send_test.php にアクセス
+ * CLI: php examples/manual_send_smpt_test.php
+ * Web: ブラウザで examples/manual_send_smpt_test.php にアクセス
  */
 require_once __DIR__ . '/../lib/class.simplemailer.php';
 
