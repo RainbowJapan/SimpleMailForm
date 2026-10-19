@@ -753,6 +753,13 @@ class MailForm
 			return false;
 		}
 
+		if (isset($this->FormConfig['mailer']) && is_array($this->FormConfig['mailer'])) {
+			$factory = $this->createMailerFactoryFromConfig($this->FormConfig['mailer']);
+			if ($factory !== null) {
+				$this->setMailerFactory($factory);
+			}
+		}
+		
 		if (isset($this->FormConfig['mailconf'])) {
 			$items = $this->FormConfig['mailconf'];
 			foreach ($items as $key => $values) {
@@ -830,6 +837,33 @@ class MailForm
 			}
 		}
 		return $requestGuard;
+	}
+
+	/**
+	 * mailer設定配列から対応する MailerFactory インスタンスを生成する
+	 *
+	 * @param array $config mailer設定
+	 * @return MailerFactoryInterface|null
+	 */
+	protected function createMailerFactoryFromConfig(array $config)
+	{
+		$type = isset($config['type']) ? strtolower($config['type']) : 'simple';
+		$host = isset($config['host']) ? $config['host'] : 'localhost';
+		$port = isset($config['port']) ? (int)$config['port'] : 587;
+		$encryption = isset($config['encryption']) ? $config['encryption'] : 'tls';
+		$username = isset($config['username']) ? $config['username'] : '';
+		$helo = isset($config['helo']) ? $config['helo'] : '';
+		$timeout = isset($config['timeout']) ? (int)$config['timeout'] : 10;
+		switch ($type) {
+			case 'smtp':
+				require_once __DIR__ . '/class.smtpmailer.php';
+				$password = isset($config['password']) ? $config['password'] : '';
+				$authType = isset($config['auth_type']) ? $config['auth_type'] : 'auto';
+				return new SmtpMailerFactory($host, $port, $encryption, $username, $password, $authType, $helo, $timeout);
+			case 'simple':
+			default:
+				return new SimplemailerFactory();
+		}
 	}
 
 	/**

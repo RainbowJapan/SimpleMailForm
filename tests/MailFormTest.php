@@ -507,6 +507,9 @@ EOT;
 		$getMailBodyTemplateByIndex = getMethod('MailForm', 'getMailBodyTemplateByIndex');
 		$getReplyToArrayByIndex = getMethod('MailForm', 'getReplyToArrayByIndex');
 		$getReturnPathArrayByIndex = getMethod('MailForm', 'getReturnPathArrayByIndex');
+		// MailForm クラスの protected プロパティ MailerFactory 取得用
+		$mailerFactoryProp = getProperty('MailForm', 'MailerFactory');
+
 		$ErrorCode = getProperty('MailForm', 'ErrorCode');
 		$mailform = new MailForm();
 		$this->assertFalse($mailform->setFormConfig("", "", 100000));
@@ -531,6 +534,17 @@ EOT;
 		// フォーマットのパターンテスト
 		$text = <<<EOT
   {
+	"mailer": {
+	  "type": "smtp",
+	  "host": "smtp.example.com",
+	  "port": 587,
+	  "encryption": "tls",
+	  "username": "smtp_user",
+	  "password": "smtp_password",
+	  "auth_type": "login",
+	  "helo": "client.example.com",
+	  "timeout": 15
+	},
 	"mailconf": {
 	  "to-admin": {
 		"from": "to-admin-from@example.com",
@@ -553,6 +567,27 @@ EOT;
   }
 EOT;
 		$this->assertTrue($mailform->setFormConfig($text, dirname(__FILE__).'/conf', MailForm::MAILFORM_FILE_TYPE_JSON));
+
+		$factory = $mailerFactoryProp->getValue($mailform);
+		$this->assertInstanceOf(SmtpMailerFactory::class, $factory);
+
+		$hostProp       = getProperty('SmtpMailerFactory', 'Host');
+		$portProp       = getProperty('SmtpMailerFactory', 'Port');
+		$encryptionProp = getProperty('SmtpMailerFactory', 'Encryption');
+		$usernameProp   = getProperty('SmtpMailerFactory', 'Username');
+		$passwordProp   = getProperty('SmtpMailerFactory', 'Password');
+		$authTypeProp   = getProperty('SmtpMailerFactory', 'AuthType');
+		$heloProp       = getProperty('SmtpMailerFactory', 'Helo');
+		$timeoutProp    = getProperty('SmtpMailerFactory', 'Timeout');
+
+		$this->assertEquals('smtp.example.com', $hostProp->getValue($factory));
+		$this->assertEquals(587, $portProp->getValue($factory));
+		$this->assertEquals('tls', $encryptionProp->getValue($factory));
+		$this->assertEquals('smtp_user', $usernameProp->getValue($factory));
+		$this->assertEquals('smtp_password', $passwordProp->getValue($factory));
+		$this->assertEquals('login', $authTypeProp->getValue($factory));
+		$this->assertEquals('client.example.com', $heloProp->getValue($factory));
+		$this->assertEquals(15, $timeoutProp->getValue($factory));
 
 		$froms = $getFromArrayByIndex->invokeArgs($mailform, ['to-admin']);
 		$this->assertCount(1, $froms);
@@ -2280,5 +2315,31 @@ EOT;
 		$guard = new RequestGuard();
 		$mailform->setRequestGuard($guard);
 		$this->assertEquals($guard, $mailform->getRequestGuard());
+	}
+
+	public function testCreateMailerFactoryFromConfig()
+	{
+		$createMailerFactoryFromConfig = getMethod('MailForm', 'createMailerFactoryFromConfig');
+		$mailform = new MailForm();
+
+		$factory = $createMailerFactoryFromConfig->invokeArgs($mailform, [[]]);
+		$this->assertInstanceOf('SimpleMailerFactory', $factory);
+
+		$factory = $createMailerFactoryFromConfig->invokeArgs($mailform, [['type' => 'simple']]);
+		$this->assertInstanceOf('SimpleMailerFactory', $factory);
+
+		$smtpConfig = [
+			'type' => 'smtp',
+			'host' => 'smtp.example.com',
+			'port' => 465,
+			'encryption' => 'ssl',
+			'username' => 'user@example.com',
+			'password' => 'secret',
+			'auth_type' => 'login',
+			'helo' => 'mail.example.com',
+			'timeout' => 30,
+		];
+		$factory = $createMailerFactoryFromConfig->invokeArgs($mailform, [$smtpConfig]);
+		$this->assertInstanceOf('SmtpMailerFactory', $factory);
 	}
 }
