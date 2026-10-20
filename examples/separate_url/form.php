@@ -10,9 +10,12 @@ $mailform = new MailForm();
 $mailform->IncludeTemplateURL = false;
 // メールフォームの各ページのURLを設定
 $request_uri = isset($_SERVER["REQUEST_URI"]) ? $_SERVER["REQUEST_URI"] : '';
-$base_path = dirname($request_uri);
-$base_path = ($base_path === '/') ? '/' : $base_path . '/';
-$mailform->InputURL = $base_path.'input.php';
+$base_path = parse_url($request_uri, PHP_URL_PATH);
+if (pathinfo($base_path, PATHINFO_EXTENSION)) {
+	$base_path = dirname($base_path);
+}
+$base_path = rtrim($base_path, '/') . '/';
+$mailform->InputURL = $base_path.'index.php';
 $mailform->ConfirmURL = $base_path.'confirm.php';
 $mailform->CompleteURL = $base_path.'complete.php';
 $mailform->ErrorURL = $base_path.'index.php';
