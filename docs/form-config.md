@@ -29,25 +29,45 @@ JSON構造の全体像は以下の通りです。
 
 ## 1. メールの送信エンジン設定 (`mailer`)
 
-メール送信時に使用するメーラーのバックエンド（`SimpleMailer` または `SmtpMailer`）を設定します。省略した場合はデフォルトで `SimpleMailer` (PHP標準の `mail()` 関数を利用) が選択されます。
+メール送信時に使用するメーラーのバックエンド（`SimpleMailer`, `SmtpMailer`, または `OAuth2Mailer`）を設定します。省略した場合はデフォルトで `SimpleMailer` (PHP標準の `mail()` 関数を利用) が選択されます。
 ローカルの sendmail や PHP 標準の mail() 関数を使用する場合は、mailer セクションの設定は不要（省略可能）です。省略した場合はデフォルトで simple が選択されます。
 
 ### 設定例 (SMTP利用時)
 
+```json
+{
+  "mailer": {
+    "type": "smtp",
+    "host": "smtp.example.com",
+    "port": 587,
+    "encryption": "tls",
+    "username": "user@example.com",
+    "password": "secret_password",
+    "auth_type": "auto",
+    "helo": "mail.example.com",
+    "timeout": 10
+  }
+}
+```
+
+### 設定例 (OAuth2 / XOAUTH2利用時 - 例: Gmail)
+
+Google Workspace / Gmail や Microsoft 365 などの OAuth 2.0 (XOAUTH2) 認証を利用する場合の設定です。リフレッシュトークンを使用してアクセストークンを自動取得・更新しながら送信します。
 
 ```json
 {
- "mailer": {
- "type": "smtp",
- "host": "smtp.example.com",
- "port": 587,
- "encryption": "tls",
- "username": "user@example.com",
- "password": "secret_password",
- "auth_type": "auto",
- "helo": "mail.example.com",
- "timeout": 10
- }
+  "mailer": {
+    "type": "oauth2",
+    "host": "smtp.gmail.com",
+    "port": 587,
+    "encryption": "tls",
+    "username": "your-account@gmail.com",
+    "token_endpoint": "https://oauth2.googleapis.com/token",
+    "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
+    "client_secret": "YOUR_CLIENT_SECRET",
+    "refresh_token": "YOUR_REFRESH_TOKEN",
+    "timeout": 10
+  }
 }
 ```
 
@@ -55,15 +75,19 @@ JSON構造の全体像は以下の通りです。
 
 | キー | 型 | 必須 | デフォルト値 | 説明 |
 | --- | --- | --- | --- | --- |
-| `type` | string | - | `"simple"` | 送信タイプ。`"simple"`（標準 `mail()`）または `"smtp"`（SMTP直接送信）を指定します。 |
-| `host` | string | - | `"localhost"` | SMTPサーバーのホスト名またはIPアドレス（`type: "smtp"` 時）。 |
-| `port` | integer | - | `587` | SMTPサーバーのポート番号。 |
+| `type` | string | - | `"simple"` | 送信タイプ。`"simple"`（標準 `mail()`）、`"smtp"`（SMTP直接送信）、または `"oauth2"`（OAuth2認証によるSMTP送信）を指定します。 |
+| `host` | string | - | `"localhost"` | SMTPサーバーのホスト名またはIPアドレス（`type: "smtp"` または `"oauth2"` 時）。 |
+| `port` | integer | - | `587` | SMTPサーバーのポート番号。通常は STARTTLS の場合 `587`、SMTPS (SSL) の場合 `465`。 |
 | `encryption` | string | - | `"tls"` | 暗号化方式（`"tls"`, `"ssl"`, または空文字/`"none"`）。 |
-| `username` | string | - | `""` | SMTP認証のユーザー名。 |
-| `password` | string | - | `""` | SMTP認証のパスワード。 |
-| `auth_type` | string | - | `"auto"` | 認証方式（`"auto"`, `"login"`, `"plain"`, `"cram-md5"` 等）。 |
+| `username` | string | - | `""` | 送信元メールアドレスまたは認証ユーザー名（`smtp` および `oauth2` 共通）。 |
+| `password` | string | - | `""` | SMTP認証のパスワード（`type: "smtp"` 時）。 |
+| `auth_type` | string | - | `"auto"` | 認証方式（`"auto"`, `"login"`, `"plain"`, `"cram-md5"` 等。`type: "smtp"` 時）。 |
+| `token_endpoint` | string | ○ (`oauth2`) | `""` | OAuth2のトークンエンドポイントURL（`type: "oauth2"` 時必須。例: `https://oauth2.googleapis.com/token`）。※HTTPS必須。 |
+| `client_id` | string | ○ (`oauth2`) | `""` | OAuth2クライアントID（`type: "oauth2"` 時必須）。 |
+| `client_secret` | string | ○ (`oauth2`) | `""` | OAuth2クライアントシークレット（`type: "oauth2"` 時必須）。 |
+| `refresh_token` | string | ○ (`oauth2`) | `""` | OAuth2リフレッシュトークン（`type: "oauth2"` 時必須）。 |
 | `helo` | string | - | `""` | EHLO/HELO コマンドで送信するドメイン名。省略時はホスト名等から自動判定されます。 |
-| `timeout` | integer | - | `10` | ソケット接続タイムアウト秒数。 |
+| `timeout` | integer | - | `10` | ソケット接続およびトークンリクエストのタイムアウト秒数。 |
 
 ---
 

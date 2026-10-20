@@ -2341,5 +2341,44 @@ EOT;
 		];
 		$factory = $createMailerFactoryFromConfig->invokeArgs($mailform, [$smtpConfig]);
 		$this->assertInstanceOf('SmtpMailerFactory', $factory);
+
+		$this->assertEquals('smtp.example.com', getProperty('SmtpMailerFactory', 'Host')->getValue($factory));
+		$this->assertEquals(465, getProperty('SmtpMailerFactory', 'Port')->getValue($factory));
+		$this->assertEquals('ssl', getProperty('SmtpMailerFactory', 'Encryption')->getValue($factory));
+		$this->assertEquals('mail.example.com', getProperty('SmtpMailerFactory', 'Helo')->getValue($factory));
+		$this->assertEquals(30, getProperty('SmtpMailerFactory', 'Timeout')->getValue($factory));
+		$this->assertEquals('user@example.com', getProperty('SmtpMailerFactory', 'Username')->getValue($factory));
+		$this->assertEquals('secret', getProperty('SmtpMailerFactory', 'Password')->getValue($factory));
+		$this->assertEquals('login', getProperty('SmtpMailerFactory', 'AuthType')->getValue($factory));
+
+		$smtpConfig = [
+			'type' => 'oauth2',
+			'host' => 'smtp.gmail.com',
+			'port' => 587,
+			'encryption' => 'tls',
+			'username' => 'your-account@gmail.com',
+			'token_endpoint' => 'https://oauth2.googleapis.com/token',
+			'client_id' => 'YOUR_CLIENT_ID.apps.googleusercontent.com',
+			'client_secret' => 'YOUR_CLIENT_SECRET',
+			'refresh_token' => 'YOUR_REFRESH_TOKEN',
+			'helo' => 'mail.example.com',
+			'timeout' => 30,
+		];
+		$factory = $createMailerFactoryFromConfig->invokeArgs($mailform, [$smtpConfig]);
+		$this->assertInstanceOf('OAuth2MailerFactory', $factory);
+
+		$this->assertEquals('smtp.gmail.com', getProperty('OAuth2MailerFactory', 'Host')->getValue($factory));
+		$this->assertEquals(587, getProperty('OAuth2MailerFactory', 'Port')->getValue($factory));
+		$this->assertEquals('tls', getProperty('OAuth2MailerFactory', 'Encryption')->getValue($factory));
+		$this->assertEquals('mail.example.com', getProperty('OAuth2MailerFactory', 'Helo')->getValue($factory));
+		$this->assertEquals(30, getProperty('OAuth2MailerFactory', 'Timeout')->getValue($factory));
+		$this->assertEquals('your-account@gmail.com', getProperty('OAuth2MailerFactory', 'Username')->getValue($factory));
+
+		$provider = getProperty('OAuth2MailerFactory', 'TokenProvider')->getValue($factory);
+		$this->assertInstanceOf('OAuth2RefreshTokenProvider', $provider);
+		$this->assertEquals('https://oauth2.googleapis.com/token', getProperty('OAuth2RefreshTokenProvider', 'TokenEndpoint')->getValue($provider));
+		$this->assertEquals('YOUR_CLIENT_ID.apps.googleusercontent.com', getProperty('OAuth2RefreshTokenProvider', 'ClientId')->getValue($provider));
+		$this->assertEquals('YOUR_CLIENT_SECRET', getProperty('OAuth2RefreshTokenProvider', 'ClientSecret')->getValue($provider));
+		$this->assertEquals('YOUR_REFRESH_TOKEN', getProperty('OAuth2RefreshTokenProvider', 'RefreshToken')->getValue($provider));
 	}
 }

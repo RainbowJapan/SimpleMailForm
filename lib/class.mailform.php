@@ -759,7 +759,7 @@ class MailForm
 				$this->setMailerFactory($factory);
 			}
 		}
-		
+
 		if (isset($this->FormConfig['mailconf'])) {
 			$items = $this->FormConfig['mailconf'];
 			foreach ($items as $key => $values) {
@@ -860,6 +860,14 @@ class MailForm
 				$password = isset($config['password']) ? $config['password'] : '';
 				$authType = isset($config['auth_type']) ? $config['auth_type'] : 'auto';
 				return new SmtpMailerFactory($host, $port, $encryption, $username, $password, $authType, $helo, $timeout);
+			case 'oauth2':
+				require_once __DIR__ . '/class.oauth2mailer.php';
+				$tokenEndpoint = isset($config['token_endpoint']) ? $config['token_endpoint'] : '';
+				$clientId = isset($config['client_id']) ? $config['client_id'] : '';
+				$clientSecret = isset($config['client_secret']) ? $config['client_secret'] : '';
+				$refreshToken = isset($config['refresh_token']) ? $config['refresh_token'] : '';
+				$tokenProvider = new OAuth2RefreshTokenProvider($tokenEndpoint, $clientId, $clientSecret, $refreshToken, $timeout);
+				return new OAuth2MailerFactory($host, $port, $encryption, $username, $tokenProvider, $helo, $timeout);
 			case 'simple':
 			default:
 				return new SimplemailerFactory();
