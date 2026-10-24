@@ -48,7 +48,7 @@ class MailForm
 	const ERROR_CODE_NOT_PLUS_PARAM = 36;      // 半角数字でない場合
 	const ERROR_CODE_TEL_PARAM = 37;           // 電話番号でない場合
 	const ERROR_CODE_NOT_EMAIL_PARAM = 38;     // メールアドレスでない場合
-	const ERROR_CODE_NOT_SAME_PARAM = 39;      // メールアドレスでない場合
+	const ERROR_CODE_NOT_SAME_PARAM = 39;      // 確認用入力と一致しない場合
 	const ERROR_CODE_INVALID_SELECT_PARAM = 40;// selectの選択が正しくされてない場合
 	const ERROR_CODE_NO_AGREEMENT = 41;        // 同意していない場合
 	const ERROR_CODE_OVER_MAXLENGTH = 42;      // 文字列が最大長より長い場合
@@ -80,7 +80,9 @@ class MailForm
 	protected $FormConfig = null;              // フォームの設定
 	protected $RequestParam = null;            // ユーザが送信したフォームデータ(ユーザ送信データ)
 	protected $Status = null;                  // ステータス
-
+	
+	protected $DefaultMaxLength = 3000;        // フォーム項目にmaxlengthが未指定の場合に自動適用する最大文字数
+	
 	protected $RequestGuard = null;            // RequestGuardオブジェクト
 
 	// テンプレートの読み込みをクラス内でできない場合は、IncludeTemplateURLをfalseにして、
@@ -113,8 +115,8 @@ class MailForm
 	self::ERROR_CODE_NOT_SAME_PARAM => '「%s」が「%s」と同じではありません',
 	self::ERROR_CODE_INVALID_SELECT_PARAM => '「%s」に不正な値が入力されています',
 	self::ERROR_CODE_NO_AGREEMENT => '同意していただく必要があります',
-	self::ERROR_CODE_UNDER_MINLENGTH => '「%s」は%s文字以下でご入力ください',
-	self::ERROR_CODE_OVER_MAXLENGTH => '「%s」は%s文字以上でご入力ください',
+	self::ERROR_CODE_UNDER_MINLENGTH => '「%s」は%s文字以上でご入力ください',
+	self::ERROR_CODE_OVER_MAXLENGTH => '「%s」は%s文字以下でご入力ください',
 	self::ERROR_CODE_NOT_YOMI_PARAM => '「%s」は全角かなでご入力ください',
 	self::ERROR_CODE_NO_CONNECT_RECAPTCHA => 'システムエラーが発生しております。しばらく時間をおいてから再度アクセスしてください',
 	self::ERROR_CODE_DUPLICATE_RECAPTCHA => 'リロードなど、２重でアクセスされました。もう一度、最初からご入力ください',
@@ -1693,6 +1695,17 @@ class MailForm
 				$this->setErrorMessage($key, self::ERROR_CODE_OVER_MAXLENGTH, $config['title'], $config['maxlength']);
 				$ret = false;
 				return true;
+			}
+		} else {
+			// 文字列型かつファイル等を除外して自動制限を適用
+			$excludeTypes = ['file', 'select', 'multi-select', 'agreement'];
+			if (is_string($inputValue) && !in_array($type, $excludeTypes, true) && $this->DefaultMaxLength !== null) {
+				// 文字制限が不要なタイプのみ例外として除外（基本はすべて制限対象）
+				if (mb_strlen($inputValue) > $this->DefaultMaxLength) {
+					$this->setErrorMessage($key, self::ERROR_CODE_OVER_MAXLENGTH, $config['title'], $this->DefaultMaxLength);
+					$ret = false;
+					return true;
+				}
 			}
 		}
 

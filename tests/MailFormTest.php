@@ -1731,7 +1731,7 @@ EOT;
 		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertFalse($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_UNDER_MINLENGTH, $ErrorCode->getValue($mailform));
-		$this->assertEquals('「title」は3文字以下でご入力ください', $ErrorMessages->getValue($mailform)['key']);
+		$this->assertEquals('「title」は3文字以上でご入力ください', $ErrorMessages->getValue($mailform)['key']);
 
 		// maxlengthのチェック、maxlengthと同じ長さ
 		$mailform = new MailForm();
@@ -1747,7 +1747,35 @@ EOT;
 		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
 		$this->assertFalse($ret);
 		$this->assertEquals(MailForm::ERROR_CODE_OVER_MAXLENGTH, $ErrorCode->getValue($mailform));
-		$this->assertEquals('「title」は3文字以上でご入力ください', $ErrorMessages->getValue($mailform)['key']);
+		$this->assertEquals('「title」は3文字以下でご入力ください', $ErrorMessages->getValue($mailform)['key']);
+
+		// maxlength未指定時のデフォルト上限チェック（3000文字以内：マルチバイト文字）
+		$mailform = new MailForm();
+		$ret = true;
+		$RequestParam->setValue($mailform, ['key' => str_repeat('あ', 3000)]);
+		$values = ['value' => 'string', 'empty' => false, 'title'=> 'title'];
+		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
+		$this->assertTrue($ret);
+
+		// maxlength未指定時のデフォルト上限チェック（3001文字：超過エラー）
+		$mailform = new MailForm();
+		$ret = true;
+		$RequestParam->setValue($mailform, ['key' => str_repeat('あ', 3001)]);
+		$values = ['value' => 'string', 'empty' => false, 'title'=> 'title'];
+		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
+		$this->assertFalse($ret);
+		$this->assertEquals(MailForm::ERROR_CODE_OVER_MAXLENGTH, $ErrorCode->getValue($mailform));
+		$this->assertEquals('「title」は3000文字以下でご入力ください', $ErrorMessages->getValue($mailform)['key']);
+
+		// DefaultMaxLengthがnullの場合は制限が適用されないこと
+		$mailform = new MailForm();
+		$DefaultMaxLength = getProperty('MailForm', 'DefaultMaxLength');
+		$DefaultMaxLength->setValue($mailform, null);
+		$ret = true;
+		$RequestParam->setValue($mailform, ['key' => str_repeat('あ', 3001)]);
+		$values = ['value' => 'string', 'empty' => false, 'title'=> 'title'];
+		$this->assertTrue($checkRequestParam->invokeArgs($mailform, [&$ret, 'key', &$values]));
+		$this->assertTrue($ret);
 
 		// value=selectで、selectvaluesがない場合
 		$mailform = new MailForm();
