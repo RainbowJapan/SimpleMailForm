@@ -182,7 +182,7 @@ bot 等によるスパム投稿を防ぐための検証ガード（reCAPTCHA v3 
 | `empty` | boolean | ○ | 空送信の許可。`false` で**必須入力（選択）**、`true` で任意入力になります。 |
 | `conv` | string | - | バリデーション実行前に入力値を自動変換します（後述参照）。 |
 | `minlength` | integer | - | 最小文字数。指定文字数未満の場合はエラーになります。 |
-| `maxlength` | integer | - | 最大文字数。指定文字数を超えるとエラーになります。 |
+| `maxlength` | integer | - | 最大文字数。指定文字数を超えるとエラーになります。<br>**未指定時はデフォルトで 3,000 文字の上限が自動適用されます。** <br>`file`、`select`、`multi-select`、`agreement` などの選択・ファイル系タイプは自動制限の対象外です。|
 | `same` | string | - | 値が一致すべき別項目のキー名を指定します（確認用入力チェック）。 |
 | `selectvalues` | object | - | `value` が `select` または `multi-select` の場合に選択肢を連想配列で定義します。 |
 | `equal` | string | - | `value` が `agreement` の場合に、同意として認める値を指定します。 |
